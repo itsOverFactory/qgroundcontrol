@@ -6,11 +6,39 @@ import QGroundControl.Controls
 import QGroundControl.FlyView
 
 RowLayout {
-    TelemetryValuesBar {
-        Layout.alignment:       Qt.AlignBottom
-        extraWidth:             instrumentPanel.extraValuesWidth
-        settingsGroup:          factValueGrid.telemetryBarSettingsGroup
-        specificVehicleForCard: null // Tracks active vehicle
+
+    property var _activeVehicle: globals.activeVehicle
+    property var _cameraManager: _activeVehicle ? _activeVehicle.cameraManager : null
+    property var _camera: _cameraManager ? _cameraManager.currentCameraInstance : null
+    property int  _cameraCaptureState: _camera ? _camera.captureVideoState : 0
+    property bool _cameraIsRecording:  _cameraCaptureState === 2
+
+    Item {
+        id:                         statusCluster
+        Layout.alignment:           Qt.AlignLeft | Qt.AlignBottom
+        Layout.preferredWidth:      statusColumn.implicitWidth
+        Layout.preferredHeight:     statusColumn.implicitHeight
+
+        ColumnLayout {
+            id:                 statusColumn
+            anchors.left:       parent.left
+            anchors.bottom:     parent.bottom
+            spacing:            ScreenTools.defaultFontPixelHeight * 0.15
+
+            CameraRecordingIndicator {
+                id:                     recordingIndicator
+                Layout.alignment:       Qt.AlignRight | Qt.AlignBottom
+                Layout.rightMargin:     ScreenTools.defaultFontPixelWidth * 0.5
+                visible:                _cameraIsRecording
+            }
+
+            TelemetryValuesBar {
+                id:                     telemetryValuesBar
+                extraWidth:             instrumentPanel.extraValuesWidth
+                settingsGroup:          factValueGrid.telemetryBarSettingsGroup
+                specificVehicleForCard: null // Tracks active vehicle
+            }
+        }
     }
 
     FlyViewInstrumentPanel {
