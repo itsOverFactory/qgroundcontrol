@@ -18,6 +18,9 @@
 #include "QGCCompression.h"
 #include "QGCFileHelper.h"
 
+#include "AppSettings.h"
+#include "SettingsManager.h"
+
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
@@ -361,7 +364,7 @@ void FirmwarePlugin::_versionFileDownloadFinished(const QString &remoteFile, con
                                                                        .arg(vehicle->firmwarePatchVersion());
         if (SettingsManager::instance()->appSettings()->showVehicleFirmwareWarning()->rawValue().toBool()) {
             qCDebug(FirmwarePluginLog) << "Vehicle is not running latest stable firmware! Running" << currentVersionNumber << "latest stable is" << version;
-        QGC::showAppMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(currentVersionNumber, version));
+            QGC::showAppMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(currentVersionNumber, version));
         }
     }
 }

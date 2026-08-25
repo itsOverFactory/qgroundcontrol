@@ -15,6 +15,7 @@ Rectangle {
     property real _minSummaryW:     ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 28 : ScreenTools.defaultFontPixelWidth * 36
     property real _summaryBoxSpace: ScreenTools.defaultFontPixelWidth * 2
     property real _margins:        ScreenTools.defaultFontPixelHeight / 2
+    property var vehicleConfigView: null
 
     function capitalizeWords(sentence) {
         return sentence.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
@@ -104,7 +105,7 @@ Rectangle {
 
                                 onClicked : {
                                     if (modelData.setupSource !== "") {
-                                        setupView.showVehicleComponentPanel(modelData)
+                                        vehicleConfigView.showVehicleComponentPanel(modelData)
                                     }
                                 }
                             }
