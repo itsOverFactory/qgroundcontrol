@@ -359,7 +359,10 @@ void FirmwarePlugin::_versionFileDownloadFinished(const QString &remoteFile, con
         const QString currentVersionNumber = QStringLiteral("%1.%2.%3").arg(vehicle->firmwareMajorVersion())
                                                                        .arg(vehicle->firmwareMinorVersion())
                                                                        .arg(vehicle->firmwarePatchVersion());
+        if (SettingsManager::instance()->appSettings()->showVehicleFirmwareWarning()->rawValue().toBool()) {
+            qCDebug(FirmwarePluginLog) << "Vehicle is not running latest stable firmware! Running" << currentVersionNumber << "latest stable is" << version;
         QGC::showAppMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(currentVersionNumber, version));
+        }
     }
 }
 
