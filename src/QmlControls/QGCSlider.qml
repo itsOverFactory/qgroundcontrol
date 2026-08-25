@@ -8,13 +8,15 @@ Slider {
     property bool zeroCentered: false ///< Value indicator starts display from zero instead of min value
     property bool displayValue: false ///< true: Show value on handle
     property bool showBoundaryValues: false ///< true: Show min/max values at slider ends
+    property real _boundaryLabelTopMargin: ScreenTools.defaultFontPixelHeight * 0.3
+    property real _contentPadding: ScreenTools.defaultFontPixelWidth * 0.4
 
     id: control
-    implicitHeight: ScreenTools.implicitSliderHeight + (showBoundaryValues ? minLabel.contentHeight : 0)
-    leftPadding: 0
-    rightPadding: 0
-    topPadding: 0
-    bottomPadding: 0
+    implicitHeight: ScreenTools.implicitSliderHeight + topPadding + bottomPadding + (showBoundaryValues ? minLabel.contentHeight + _boundaryLabelTopMargin : 0)
+    leftPadding: _contentPadding
+    rightPadding: _contentPadding
+    topPadding: _contentPadding
+    bottomPadding: _contentPadding
     wheelEnabled: false
 
     property real _implicitBarLength: Math.round(ScreenTools.defaultFontPixelWidth * 20)
@@ -23,6 +25,7 @@ Slider {
     QGCPalette { id: qgcPal; colorGroupEnabled: control.enabled }
 
     background: Rectangle {
+        id: sliderBar
         x: control.horizontal ? control.leftPadding : control.leftPadding + control.availableWidth / 2 - width / 2
         y: control.horizontal ? control.topPadding + control.availableHeight / 2 - height / 2 : control.topPadding
         implicitWidth: control.horizontal ? control._implicitBarLength : control._barHeight
@@ -65,7 +68,8 @@ Slider {
         id: minLabel
         anchors.left: parent.left
         anchors.leftMargin: control.leftPadding
-        anchors.bottom: parent.bottom
+        anchors.top: sliderBar.bottom
+        anchors.topMargin: control._boundaryLabelTopMargin
         text: control.from.toFixed(1)
         font.pointSize: ScreenTools.smallFontPointSize
         color: qgcPal.buttonText
@@ -76,7 +80,8 @@ Slider {
         id: maxLabel
         anchors.right: parent.right
         anchors.rightMargin: control.rightPadding
-        anchors.bottom: parent.bottom
+        anchors.top: sliderBar.bottom
+        anchors.topMargin: control._boundaryLabelTopMargin
         text: control.to.toFixed(1)
         font.pointSize: ScreenTools.smallFontPointSize
         color: qgcPal.buttonText
