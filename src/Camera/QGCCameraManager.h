@@ -36,6 +36,7 @@ class QGCCameraManager : public QObject
     Q_PROPERTY(MavlinkCameraControlInterface* currentCameraInstance READ currentCameraInstance NOTIFY currentCameraChanged)
     Q_PROPERTY(int currentCamera READ currentCamera WRITE setCurrentCamera NOTIFY currentCameraChanged)
     Q_PROPERTY(int currentZoomLevel READ currentZoomLevel NOTIFY currentZoomLevelChanged)
+    Q_PROPERTY(bool mountIsRecording READ mountIsRecording NOTIFY mountFallbackStatusChanged)
 
 #ifdef QGC_UNITTEST_BUILD
     friend class QGCCameraManagerTest;
@@ -93,6 +94,8 @@ public:
     double currentCameraAspect();
     Q_INVOKABLE void requestCameraFovForComp(int compId);
 
+    bool mountIsRecording() const { return _mountFallbackVideoRecording; };
+    
 private:
     int _zoomValueCurrent = 0;
 
@@ -103,6 +106,7 @@ signals:
     void streamChanged();
 
     void currentZoomLevelChanged();
+    void mountFallbackStatusChanged();
 
 protected slots:
     void _vehicleReady(bool ready);
@@ -142,6 +146,7 @@ private:
     void _handleTrackingImageStatus(const mavlink_message_t& message);
     void _addCameraControlToLists(MavlinkCameraControlInterface* cameraControl);
     void _handleCameraFovStatus(const mavlink_message_t& message);
+    bool _shouldUseMountFallback(const mavlink_message_t& message);
 
     Vehicle* _vehicle;              ///< Raw pointer is safe: QGCCameraManager is a QObject child of Vehicle, so Vehicle always outlives us
     QPointer<SimulatedCameraControl> _simulatedCameraControl;
@@ -161,4 +166,6 @@ private:
     bool _initialConnectComplete = false;
 
     QHash<int, double> _aspectByCompId;
+
+    bool _mountFallbackVideoRecording = 0;
 };
