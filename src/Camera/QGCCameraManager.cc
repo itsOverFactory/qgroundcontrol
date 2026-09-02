@@ -420,32 +420,12 @@ void QGCCameraManager::_handleCameraCaptureStatus(const mavlink_message_t &messa
                                   << QGCMAVLink::compIdToString(message.compid)
                                   << "to" << QGCMAVLink::compIdToString(pCamera->compID());
         pCamera->handleCameraCaptureStatus(cap);
-    } else if (QGCCameraManager::_shouldUseMountFallback(message)) {
-        mavlink_camera_capture_status_t cap{};
-        mavlink_msg_camera_capture_status_decode(&message, &cap);
-        _mountFallbackVideoRecording = cap.video_status == 1;
-        emit mountFallbackStatusChanged();
     } else {
         qCDebug(CameraManagerLog) << "Ignoring CAMERA_CAPTURE_STATUS from"
                                   << QGCMAVLink::compIdToString(message.compid)
                                   << "- no matching camera";
         return;
     }
-}
-
-bool QGCCameraManager::_shouldUseMountFallback(const mavlink_message_t& message)
-{
-    // Handle CAMERA_CAPTURE_STATUS messages from the autopilot
-    // Only proveed if there is no camera control for the autopilot component and 
-    // the only camera in the list is the simulated camera.
-    if (message.msgid == MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS &&
-        message.compid == MAV_COMP_ID_AUTOPILOT1 &&
-        !_findCamera(message.compid) &&
-        ((_cameras.count() == 1) && (_cameras[0] == _simulatedCameraControl)))
-    {
-        return true;   
-    }
-    return false;
 }
 
 void QGCCameraManager::_handleStorageInformation(const mavlink_message_t &message)
