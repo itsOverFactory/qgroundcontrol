@@ -140,6 +140,7 @@ private:
     void _handleVideoStreamStatus(const mavlink_message_t& message);
     void _handleBatteryStatus(const mavlink_message_t& message);
     void _handleTrackingImageStatus(const mavlink_message_t& message);
+    void _handleCameraThermalRange(const mavlink_message_t& message);
     void _addCameraControlToLists(MavlinkCameraControlInterface* cameraControl);
     void _handleCameraFovStatus(const mavlink_message_t& message);
 

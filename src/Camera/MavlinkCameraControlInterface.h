@@ -42,6 +42,7 @@ class MavlinkCameraControlInterface : public FactGroup
     Q_PROPERTY(bool                 hasZoom                 READ hasZoom                                            NOTIFY infoChanged)
     Q_PROPERTY(bool                 hasFocus                READ hasFocus                                           NOTIFY infoChanged)
     Q_PROPERTY(bool                 hasVideoStream          READ hasVideoStream                                     NOTIFY infoChanged)
+    Q_PROPERTY(bool                 hasThermalRange         READ hasThermalRange                                    NOTIFY infoChanged)
     Q_PROPERTY(bool                 hasTracking             READ hasTracking                                        NOTIFY infoChanged)
     Q_PROPERTY(bool                 supportsTrackingPoint   READ supportsTrackingPoint                              NOTIFY infoChanged)
     Q_PROPERTY(bool                 supportsTrackingRect    READ supportsTrackingRect                               NOTIFY infoChanged)
@@ -75,6 +76,9 @@ class MavlinkCameraControlInterface : public FactGroup
     Q_PROPERTY(QStringList          streamLabels            READ streamLabels                                       NOTIFY streamLabelsChanged)
     Q_PROPERTY(ThermalViewMode      thermalMode             READ thermalMode            WRITE setThermalMode        NOTIFY thermalModeChanged)
     Q_PROPERTY(double               thermalOpacity          READ thermalOpacity         WRITE setThermalOpacity     NOTIFY thermalOpacityChanged)
+    Q_PROPERTY(bool                 thermalRangeAvailable   READ thermalRangeAvailable                              NOTIFY thermalRangeChanged)
+    Q_PROPERTY(double               thermalRangeMax         READ thermalRangeMax                                    NOTIFY thermalRangeChanged)
+    Q_PROPERTY(double               thermalRangeMin         READ thermalRangeMin                                    NOTIFY thermalRangeChanged)
 
     // Camera tracking properties
     Q_PROPERTY(bool                 trackingEnabled         READ trackingEnabled        WRITE setTrackingEnabled    NOTIFY trackingEnabledChanged)
@@ -185,6 +189,7 @@ public:
     virtual bool supportsTrackingPoint() const = 0;
     virtual bool supportsTrackingRect() const = 0;
     virtual bool hasVideoStream() const = 0;
+    virtual bool hasThermalRange() const = 0;
     virtual bool photosInVideoMode() const = 0;
     virtual bool videoInPhotoMode() const = 0;
     virtual CaptureVideoState captureVideoState() const = 0;
@@ -230,6 +235,9 @@ public:
     virtual void setThermalMode(ThermalViewMode mode) = 0;
     virtual double thermalOpacity() const = 0;
     virtual void setThermalOpacity(double val) = 0;
+    virtual bool thermalRangeAvailable() const = 0;
+    virtual double thermalRangeMax() const = 0;
+    virtual double thermalRangeMin() const = 0;
 
     virtual void setZoomLevel(qreal level) = 0;
     virtual void setFocusLevel(qreal level) = 0;
@@ -260,6 +268,7 @@ public:
     virtual void handleTrackingImageStatus(const mavlink_camera_tracking_image_status_t &trackingImageStatus) = 0;
     virtual void handleVideoStreamInformation(const mavlink_video_stream_information_t &videoStreamInformation) = 0;
     virtual void handleVideoStreamStatus(const mavlink_video_stream_status_t &videoStreamStatus) = 0;
+    virtual void handleCameraThermalRange(const mavlink_camera_thermal_range_t &thermalRange) = 0;
 
     QString cameraModeToStr(CameraMode mode);
     QString captureImageStatusToStr(uint8_t image_status);
@@ -296,6 +305,7 @@ signals:
     void trackingImageRadiusChanged();
     void thermalModeChanged();
     void thermalOpacityChanged();
+    void thermalRangeChanged();
     void storageStatusChanged();
     void captureVideoStateChanged();
     void capturePhotosStateChanged();

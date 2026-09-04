@@ -204,6 +204,9 @@ void QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t &message)
         case MAVLINK_MSG_ID_CAMERA_FOV_STATUS:
             _handleCameraFovStatus(message);
             break;
+        case MAVLINK_MSG_ID_CAMERA_THERMAL_RANGE:
+            _handleCameraThermalRange(message);
+            break;
         default:
             break;
         }
@@ -513,6 +516,17 @@ void QGCCameraManager::_handleTrackingImageStatus(const mavlink_message_t &messa
         mavlink_msg_camera_tracking_image_status_decode(&message, &tis);
         pCamera->handleTrackingImageStatus(tis);
     }
+}
+
+void QGCCameraManager::_handleCameraThermalRange(const mavlink_message_t& message)
+{
+    MavlinkCameraControlInterface* pCamera = _findCamera(message.compid);
+    if (pCamera == nullptr) {
+        return;
+    }
+    mavlink_camera_thermal_range_t thermalRange{};
+    mavlink_msg_camera_thermal_range_decode(&message, &thermalRange);
+    pCamera->handleCameraThermalRange(thermalRange);
 }
 
 static void _handleCameraInfoRetry(QGCCameraManager::CameraStruct *cameraInfo);
