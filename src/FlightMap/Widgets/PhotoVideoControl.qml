@@ -39,7 +39,7 @@ Rectangle {
 
         ColumnLayout {
             Layout.fillHeight: true
-            spacing: 0
+            spacing: _smallMargins
             visible: _camera.hasZoom
 
             QGCLabel {
@@ -48,16 +48,129 @@ Rectangle {
                 font.pointSize: ScreenTools.smallFontPointSize
             }
 
-            QGCSlider {
+            // Zoom In button
+            Item {
+                id: zoomInButton
                 Layout.alignment: Qt.AlignHCenter
-                Layout.fillHeight: true
-                orientation: Qt.Vertical
-                to: 100
-                from: 0
-                value: _camera.zoomLevel
-                live: true
-                onValueChanged: _camera.zoomLevel = value
+                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 5
+                Layout.preferredHeight: Layout.preferredWidth
+
+                Rectangle {
+                    id: zoomInButtonBackground
+                    anchors.fill: parent
+                    radius: ScreenTools.defaultBorderRadius
+                    color: qgcPal.button
+                    border.width: 1
+                    border.color: qgcPal.buttonBorder
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: zoomInButtonBackground.radius
+                    color: qgcPal.buttonHighlight
+                    opacity: (zoomInMouseArea.pressed && zoomInMouseArea.containsMouse) ? 1 : (zoomInMouseArea.containsMouse ? 0.2 : 0)
+                }
+
+                QGCColoredImage {
+                    anchors.centerIn: parent
+                    source: "/qmlimages/camera_zoom_in.svg"
+                    width: parent.width * 0.45
+                    height: width
+                    color: (zoomInMouseArea.pressed && zoomInMouseArea.containsMouse) ? qgcPal.buttonHighlightText : qgcPal.text
+                }
+
+                QGCMouseArea {
+                    id: zoomInMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onPressed: _camera.startZoom(1)
+                    onReleased: _camera.stopZoom()
+                    onCanceled: _camera.stopZoom()
+                    onExited: pressed ? _camera.stopZoom() : null
+                }
             }
+
+            // Zoom Out button
+            Item {
+                id: zoomOutButton
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 5
+                Layout.preferredHeight: Layout.preferredWidth
+
+                Rectangle {
+                    id: zoomOutButtonBackground
+                    anchors.fill: parent
+                    radius: ScreenTools.defaultBorderRadius
+                    color: qgcPal.button
+                    border.width: 1
+                    border.color: qgcPal.buttonBorder
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: zoomOutButtonBackground.radius
+                    color: qgcPal.buttonHighlight
+                    opacity: (zoomOutMouseArea.pressed && zoomOutMouseArea.containsMouse) ? 1 : (zoomOutMouseArea.containsMouse ? 0.2 : 0)
+                }
+
+                QGCColoredImage {
+                    anchors.centerIn: parent
+                    source: "/qmlimages/camera_zoom_out.svg"
+                    width: parent.width * 0.45
+                    height: width
+                    color: (zoomOutMouseArea.pressed && zoomOutMouseArea.containsMouse) ? qgcPal.buttonHighlightText : qgcPal.text
+                }
+
+                QGCMouseArea {
+                    id: zoomOutMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onPressed: _camera.startZoom(-1)
+                    onReleased: _camera.stopZoom()
+                    onCanceled: _camera.stopZoom()
+                    onExited: pressed ? _camera.stopZoom() : null
+                }
+            }
+
+            // Reset Zoom button
+            Rectangle {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 5
+                Layout.preferredHeight: Layout.preferredWidth
+
+                radius: ScreenTools.defaultBorderRadius
+                color: qgcPal.button
+                border.width: 1
+                border.color: qgcPal.buttonBorder
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: parent.radius
+                    opacity: (resetZoomMouseArea.pressed && resetZoomMouseArea.containsMouse) ? 1 : (resetZoomMouseArea.containsMouse ? 0.2 : 0)
+                }
+                QGCLabel {
+                    anchors.centerIn: parent
+                    text: qsTr("Reset")
+                    font.pointSize: ScreenTools.smallFontPointSize
+                    color: (resetZoomMouseArea.pressed && resetZoomMouseArea.containsMouse) ? qgcPal.buttonHighlightText : qgcPal.text
+                }
+
+                QGCMouseArea {
+                    id: resetZoomMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: _camera.zoomLevel = 0.0
+                }
+            }
+
+            // Zoom level
+            QGCLabel {
+                Layout.alignment: Qt.AlignHCenter
+                text: qsTr("%1 %").arg(_camera.zoomLevel.toFixed(0))
+                font.pointSize: ScreenTools.smallFontPointSize
+                color: _camera.zoomLevel < 100.0 ? qgcPal.text : qgcPal.colorGreen
+            }
+
         }
 
         ColumnLayout {
