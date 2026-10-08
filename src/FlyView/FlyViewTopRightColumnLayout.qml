@@ -9,6 +9,8 @@ import QGroundControl.FlightMap
 ColumnLayout {
     spacing: ScreenTools.defaultFontPixelHeight / 2
 
+    property bool photoVideoControlVisible: photoVideoControlLoader.visible
+
     TerrainProgress {
         Layout.fillWidth: true
     }

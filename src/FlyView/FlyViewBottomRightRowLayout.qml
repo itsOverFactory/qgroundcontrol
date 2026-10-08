@@ -8,6 +8,7 @@ import QGroundControl.FlyView
 RowLayout {
     id:                    layoutRoot
 
+    property bool photoVideoControlVisible: false
     property var _activeVehicle: globals.activeVehicle
     property var _cameraManager: _activeVehicle ? _activeVehicle.cameraManager : null
     property var _camera: _cameraManager ? _cameraManager.currentCameraInstance : null
@@ -29,7 +30,7 @@ RowLayout {
                 id:                     recordingIndicator
                 Layout.alignment:       Qt.AlignRight | Qt.AlignBottom
                 Layout.rightMargin:     ScreenTools.defaultFontPixelWidth * 0.5
-                visible:                layoutRoot._cameraIsRecording ? true : false
+                visible:                !layoutRoot.photoVideoControlVisible && layoutRoot._cameraIsRecording
             }
 
             TelemetryValuesBar {

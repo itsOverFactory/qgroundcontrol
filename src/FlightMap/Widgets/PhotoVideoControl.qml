@@ -35,7 +35,7 @@ Rectangle {
         anchors.margins: _smallMargins
         anchors.top: parent.top
         anchors.left: parent.left
-        spacing: _margins
+        spacing: _smallMargins
 
         ColumnLayout {
             Layout.fillHeight: true
@@ -174,13 +174,13 @@ Rectangle {
         }
 
         ColumnLayout {
-            spacing: _margins
+            spacing: _smallMargins
 
             // Camera name
             QGCLabel {
                 Layout.alignment: Qt.AlignHCenter
                 text: _camera.modelName
-                visible: _cameraManager.cameras.length > 1
+                visible: _cameraManager.cameras.count > 0 && _camera.modelName !== "Simulated Camera"
             }
 
             // Photo/Video Mode Selector
