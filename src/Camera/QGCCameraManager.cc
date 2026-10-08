@@ -416,7 +416,15 @@ void QGCCameraManager::_handleCameraCaptureStatus(const mavlink_message_t &messa
     if (pCamera) {
         mavlink_camera_capture_status_t cap{};
         mavlink_msg_camera_capture_status_decode(&message, &cap);
+        qCDebug(CameraManagerLog) << "CAMERA_CAPTURE_STATUS from" 
+                                  << QGCMAVLink::compIdToString(message.compid)
+                                  << "to" << QGCMAVLink::compIdToString(pCamera->compID());
         pCamera->handleCameraCaptureStatus(cap);
+    } else {
+        qCDebug(CameraManagerLog) << "Ignoring CAMERA_CAPTURE_STATUS from"
+                                  << QGCMAVLink::compIdToString(message.compid)
+                                  << "- no matching camera";
+        return;
     }
 }
 

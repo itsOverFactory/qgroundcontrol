@@ -92,7 +92,7 @@ public:
     double aspectForComp(int compId) const;
     double currentCameraAspect();
     Q_INVOKABLE void requestCameraFovForComp(int compId);
-
+    
 private:
     int _zoomValueCurrent = 0;
 

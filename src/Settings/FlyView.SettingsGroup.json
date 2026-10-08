@@ -53,6 +53,14 @@
             "keywords": "center map"
         },
         {
+            "name": "showCameraControls",
+            "shortDesc": "Display camera controls panel for vehicles with camera support.",
+            "type": "bool",
+            "default": true,
+            "label": "Show camera controls panel",
+            "keywords": "camera control"
+        },
+        {
             "name": "showSimpleCameraControl",
             "shortDesc": "Display simple camera trigger controls using MAVLink DIGICAM_CONTROL commands.",
             "type": "bool",

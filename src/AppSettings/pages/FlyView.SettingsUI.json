@@ -4,6 +4,7 @@
     "bindings": {
         "hasChecklist": "QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length",
         "useChecklistValue": "QGroundControl.settingsManager.appSettings.useChecklist.value",
+        "cameraControlsOn": "QGroundControl.settingsManager.flyViewSettings.showCameraControls.value",
         "virtualJoystickOn": "QGroundControl.settingsManager.appSettings.virtualJoystick.rawValue"
     },
     "groups": [
@@ -30,7 +31,12 @@
                     "setting": "flyViewSettings.showLogReplayStatusBar"
                 },
                 {
-                    "setting": "flyViewSettings.showSimpleCameraControl"
+                    "setting": "flyViewSettings.showCameraControls"
+                },
+                {
+                    "setting": "flyViewSettings.showSimpleCameraControl",
+                    "showWhen": "cameraControlsOn",
+                    "enableWhen": "cameraControlsOn"
                 },
                 {
                     "setting": "flyViewSettings.updateHomePosition"

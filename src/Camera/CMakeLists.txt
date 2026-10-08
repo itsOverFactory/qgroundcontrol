@@ -37,4 +37,6 @@ qt_add_resources(${CMAKE_PROJECT_NAME} camera_qmlimages
     FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/images/camera_photo.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/images/camera_video.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/images/camera_zoom_in.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/images/camera_zoom_out.svg"
 )

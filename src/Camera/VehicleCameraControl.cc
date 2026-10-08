@@ -807,8 +807,13 @@ void VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int c
             if (result == MAV_RESULT_TEMPORARILY_REJECTED) {
                 qCDebug(VehicleCameraControlLog) << "Command temporarily rejected (MAV_RESULT_TEMPORARILY_REJECTED) for" << commandStr;
             } else {
-                qCDebug(VehicleCameraControlLog) << "Command failed (MAV_RESULT_FAILED) for" << commandStr;
-            }
+                qCDebug(VehicleCameraControlLog)
+                    << "Command failed (MAV_RESULT_FAILED) for"
+                    << commandStr
+                    << "failureCode:"
+                    << Vehicle::mavCmdResultFailureCodeToString(
+                           static_cast<Vehicle::MavCmdResultFailureCode_t>(failureCode));
+             }
             switch(command) {
                 case MAV_CMD_RESET_CAMERA_SETTINGS:
                     _resetting = false;
@@ -1514,20 +1519,34 @@ void VehicleCameraControl::_requestParamUpdates()
     _updatesToRequest.clear();
 }
 
+static void _requestCameraSettingsMessageResultHandler(void* resultHandlerData, MAV_RESULT result, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, [[maybe_unused]] const mavlink_message_t& message)
+{
+    auto* camera = static_cast<VehicleCameraControl*>(resultHandlerData);
+    if (!camera) {
+        return;
+    }
+
+    if (result != MAV_RESULT_ACCEPTED) {
+        qCDebug(VehicleCameraControlLog)
+            << "MAV_CMD_REQUEST_MESSAGE:MAVLINK_MSG_ID_CAMERA_SETTINGS failed. compId"
+            << camera->compID()
+            << "Result:" << QGCMAVLink::mavResultToString(result)
+            << "FailureCode:" << Vehicle::requestMessageResultHandlerFailureCodeToString(failureCode);
+    }
+}
 void VehicleCameraControl::_requestCameraSettings()
 {
     qCDebug(VehicleCameraControlLog) << "_requestCameraSettings() - retries:" << _cameraSettingsRetries << "timer active:" << _cameraSettingsTimer.isActive();
     if(_vehicle) {
         // Use REQUEST_MESSAGE instead of deprecated REQUEST_CAMERA_SETTINGS
         // first time and every other time after that.
-
         if(_cameraSettingsRetries % 2 == 0) {
             qCDebug(VehicleCameraControlLog) << "  Sending REQUEST_MESSAGE:MAVLINK_MSG_ID_CAMERA_SETTINGS";
-            _vehicle->sendMavCommand(
-                _compID,                                 // target component
-                MAV_CMD_REQUEST_MESSAGE,                // command id
-                false,                                  // showError
-                MAVLINK_MSG_ID_CAMERA_SETTINGS);        // msgid
+            _vehicle->requestMessage(
+                _requestCameraSettingsMessageResultHandler,
+                this,
+                _compID,
+                MAVLINK_MSG_ID_CAMERA_SETTINGS);
         } else {
             qCDebug(VehicleCameraControlLog) << "  Sending MAV_CMD_REQUEST_CAMERA_SETTINGS (legacy)";
             _vehicle->sendMavCommand(
