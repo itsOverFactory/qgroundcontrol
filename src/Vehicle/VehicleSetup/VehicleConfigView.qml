@@ -233,6 +233,9 @@ Rectangle {
             if (panelLoader.item && typeof panelLoader.item.sectionNameFilter !== "undefined") {
                 panelLoader.item.sectionNameFilter = _sectionName(_selectedComponentIndex, _selectedSectionIndex)
             }
+            if (panelLoader.item && typeof panelLoader.item.vehicleConfigView !== "undefined") {
+                panelLoader.item.vehicleConfigView = vehicleConfigView
+            }
         }
     }
 

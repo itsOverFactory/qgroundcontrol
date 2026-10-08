@@ -351,6 +351,14 @@
             "keywords": "language,locale"
         },
         {
+            "name": "showVehicleFirmwareWarning",
+            "shortDesc": "On startup, show warning when a newer stable version of vehicle firmware is detected.",
+            "type": "bool",
+            "default": true,
+            "label": "Show startup vehicle firmware warning",
+            "keywords": "vehicle,firmware,warning"
+        },
+        {
             "name": "clearSettingsNextBoot",
             "shortDesc": "Resets all application preferences to their defaults on the next launch.",
             "longDesc": "When enabled, all application settings will be reset to defaults on the next start.",

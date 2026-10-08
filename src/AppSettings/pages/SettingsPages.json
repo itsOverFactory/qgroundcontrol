@@ -70,7 +70,7 @@
             "name": "PX4 Log Transfer",
             "qml": "PX4LogTransferSettings.qml",
             "icon": "qrc:/InstrumentValueIcons/inbox-download.svg",
-            "visible": "QGroundControl.corePlugin.options.showPX4LogTransferOptions && QGroundControl.px4ProFirmwareSupported && (QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.px4Firmware : true)",
+            "visible": "QGroundControl.corePlugin.options.showPX4LogTransferOptions && QGroundControl.px4ProFirmwareSupported && (QGroundControl.settingsManager.appSettings.preferredFirmwareClass.rawValue === 12 || (QGroundControl.multiVehicleManager.activeVehicle && QGroundControl.multiVehicleManager.activeVehicle.px4Firmware))",
             "pageDefinition": "PX4LogTransfer.SettingsUI.json"
         },
         {
