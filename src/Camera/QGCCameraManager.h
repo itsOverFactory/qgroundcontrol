@@ -14,6 +14,7 @@
 
 class Vehicle;
 
+class CameraFactGroup;
 class CameraMetaData;
 class Joystick;
 class MavlinkCameraControlInterface;
@@ -140,6 +141,7 @@ private:
     void _handleVideoStreamStatus(const mavlink_message_t& message);
     void _handleBatteryStatus(const mavlink_message_t& message);
     void _handleTrackingImageStatus(const mavlink_message_t& message);
+    void _handleCameraThermalRange(const mavlink_message_t& message);
     void _addCameraControlToLists(MavlinkCameraControlInterface* cameraControl);
     void _handleCameraFovStatus(const mavlink_message_t& message);
 
@@ -161,4 +163,7 @@ private:
     bool _initialConnectComplete = false;
 
     QHash<int, double> _aspectByCompId;
+    // flyview telemetry widget
+    QMap<uint8_t, CameraFactGroup*> _cameraFactGroups;
+    static constexpr const char *_cameraFactGroupNamePrefix = "camera";
 };

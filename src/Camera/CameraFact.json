@@ -1,0 +1,21 @@
+{
+    "version":      1,
+    "fileType":     "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "thermalRangeMax",
+    "shortDesc":        "Thermal Max",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "C"
+},
+{
+    "name":             "thermalRangeMin",
+    "shortDesc":        "Thermal Min",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "C"
+}
+]
+}
