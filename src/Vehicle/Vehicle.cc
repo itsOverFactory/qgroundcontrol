@@ -2,6 +2,7 @@
 #include "Actuators.h"
 #include "BatteryFactGroupListModel.h"
 #include "EscStatusFactGroupListModel.h"
+#include "MountFactGroupListModel.h"
 #include "RadioStatusFactGroup.h"
 #include "TerrainFactGroup.h"
 #include "VehicleClockFactGroup.h"
@@ -327,6 +328,7 @@ void Vehicle::_commonInit(LinkInterface* link)
     _terrainFactGroup               = new TerrainFactGroup(this);
     _radioStatusFactGroup           = new RadioStatusFactGroup(this);
     _batteryFactGroupListModel      = new BatteryFactGroupListModel(this);
+    _mountFactGroupListModel        = new MountFactGroupListModel(this);
     _escStatusFactGroupListModel    = new EscStatusFactGroupListModel(this);
 
     if (!_offlineEditingVehicle) {
@@ -428,6 +430,7 @@ FactGroup* Vehicle::rpmFactGroup()                  { return _rpmFactGroup; }
 FactGroup* Vehicle::radioStatusFactGroup()          { return _radioStatusFactGroup; }
 
 QmlObjectListModel* Vehicle::batteries()            { return _batteryFactGroupListModel; }
+QmlObjectListModel* Vehicle::mounts()               { return _mountFactGroupListModel; }
 QmlObjectListModel* Vehicle::escs()                 { return _escStatusFactGroupListModel; }
 
 QObject* Vehicle::sysStatusSensorInfo()                             { return _sysStatusSensorInfo.get(); }
@@ -577,6 +580,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     // Handle creation of dynamic fact group lists
     _batteryFactGroupListModel->handleMessageForFactGroupCreation(this, message);
     _escStatusFactGroupListModel->handleMessageForFactGroupCreation(this, message);
+    _mountFactGroupListModel->handleMessageForFactGroupCreation(this, message);
 
     // Let the fact groups take a whack at the mavlink traffic
     for (FactGroup* factGroup : factGroups()) {
@@ -3392,6 +3396,18 @@ void Vehicle::motorInterlock(bool enable)
             true,
             APM::AUX_FUNC::MOTOR_INTERLOCK,
             enable ? MAV_CMD_DO_AUX_FUNCTION_SWITCH_LEVEL_HIGH : MAV_CMD_DO_AUX_FUNCTION_SWITCH_LEVEL_LOW);
+    }
+}
+
+void Vehicle::mountRangefinderEnable(int id, bool enable)
+{
+    if (apmFirmware()) {
+        sendMavCommand(
+            defaultComponentId(),
+            MAV_CMD_DO_MOUNT_RANGEFINDER_ENABLE,
+            true,
+            static_cast<float>(id),
+            enable ? 1.0f : 0.0f);
     }
 }
 
