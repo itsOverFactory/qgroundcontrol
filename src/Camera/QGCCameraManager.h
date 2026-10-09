@@ -14,6 +14,7 @@
 
 class Vehicle;
 
+class CameraFactGroup;
 class CameraMetaData;
 class Joystick;
 class MavlinkCameraControlInterface;
@@ -162,4 +163,7 @@ private:
     bool _initialConnectComplete = false;
 
     QHash<int, double> _aspectByCompId;
+    // flyview telemetry widget
+    QMap<uint8_t, CameraFactGroup*> _cameraFactGroups;
+    static constexpr const char *_cameraFactGroupNamePrefix = "camera";
 };
