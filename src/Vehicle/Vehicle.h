@@ -32,6 +32,7 @@ class SysStatusSensorInfo;
 class VehicleLinkManager;
 class AutoPilotPlugin;
 class BatteryFactGroupListModel;
+class MountFactGroupListModel;
 class EscStatusFactGroupListModel;
 class GimbalController;
 class RadioStatusFactGroup;
@@ -255,6 +256,7 @@ public:
 
     // Dynamic FactGroupListModel properties
     Q_PROPERTY(QmlObjectListModel*  batteries       READ batteries                  CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  mounts          READ mounts                     CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  escs            READ escs                       CONSTANT)
 
     Q_PROPERTY(int      firmwareMajorVersion        READ firmwareMajorVersion       NOTIFY firmwareVersionChanged)
@@ -569,6 +571,7 @@ public:
     FactGroup* rpmFactGroup                 ();
 
     QmlObjectListModel* batteries           ();
+    QmlObjectListModel* mounts              ();
     QmlObjectListModel* escs                ();
 
     MissionManager*                 missionManager      () { return _missionManager; }
@@ -1116,6 +1119,7 @@ public:
 
     // Dynamic FactGroups
     BatteryFactGroupListModel*          _batteryFactGroupListModel  = nullptr;
+    MountFactGroupListModel*            _mountFactGroupListModel    = nullptr;
     EscStatusFactGroupListModel*        _escStatusFactGroupListModel = nullptr;
 
     TerrainProtocolHandler* _terrainProtocolHandler = nullptr;
@@ -1153,6 +1157,9 @@ public:
 
     /// Command vehicle to Enable/Disable Motor Interlock
     Q_INVOKABLE void motorInterlock(bool enable);
+
+
+    Q_INVOKABLE void mountRangefinderEnable(int id, bool enable);
 
 /*---------------------------------------------------------------------------*/
 /*===========================================================================*/
