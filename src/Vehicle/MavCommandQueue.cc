@@ -236,6 +236,7 @@ bool MavCommandQueue::_canBeDuplicated(MAV_CMD command)
     switch (command) {
     case MAV_CMD_DO_MOTOR_TEST:
     case MAV_CMD_SET_MESSAGE_INTERVAL:
+    case MAV_CMD_SET_CAMERA_ZOOM:
         return true;
     default:
         return false;
