@@ -29,6 +29,8 @@ Item {
     property var    squareButtonPadding:        ScreenTools.defaultFontPixelWidth
     property var    separatorHeight:            buttonHeight * 0.9
     property var    settingsPanelVisible:       false
+    property var    requestedRangefinderMount:   null
+    property bool   requestedRangefinderEnabled: false
 
     property var _gimbalControllerSettings: QGroundControl.settingsManager.gimbalControllerSettings
 
@@ -215,6 +217,30 @@ Item {
                     }
                 }
 
+                // One slider per mount which reports a rangefinder state
+                Repeater {
+                    model: activeVehicle.mounts
+
+                    QGCCheckBoxSlider {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Rangefinder %1").arg(object.id.valueString)
+                        visible:            object.rangefinderStatusAvailable
+
+                        // The slider always shows the state reported by the vehicle
+                        Binding on checked {
+                            value: object.rangefinderEnabled
+                        }
+
+                        onClicked: {
+                            control.requestedRangefinderMount = object
+                            control.requestedRangefinderEnabled = checked
+                            activeVehicle.mountRangefinderEnable(object.id.rawValue, checked)
+                            rangefinderConfirmTimer.restart()
+                            checked = object.rangefinderEnabled
+                        }
+                    }
+                }
+
                 QGCButton {
                     Layout.fillWidth:   true
                     text:               activeGimbal.gimbalHaveControl ? qsTr("Release Control") : qsTr("Acquire Control")
@@ -311,6 +337,22 @@ Item {
                     text:               qsTr("Show Acquire/Release control button")
                     fact:               _gimbalControllerSettings.toolbarIndicatorShowAcquireReleaseControl
                 }
+            }
+        }
+    }
+
+    // Checks that the rangefinder state reported by the vehicle follows the last request
+    Timer {
+        id:         rangefinderConfirmTimer
+        interval:   3000
+        onTriggered: {
+            if (control.requestedRangefinderMount.rangefinderEnabled !== control.requestedRangefinderEnabled) {
+                QGroundControl.showMessageDialog(
+                    control,
+                    qsTr("Rangefinder %1").arg(control.requestedRangefinderMount.id.valueString),
+                    control.requestedRangefinderEnabled ?
+                        qsTr("The gimbal did not report the rangefinder as on.") :
+                        qsTr("The gimbal did not report the rangefinder as off."))
             }
         }
     }
