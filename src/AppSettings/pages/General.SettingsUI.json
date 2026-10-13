@@ -46,6 +46,9 @@
                     "showWhen": "!ScreenTools.isMobile"
                 },
                 {
+                    "setting": "appSettings.showVehicleFirmwareWarning"
+                },
+                {
                     "setting": "appSettings.clearSettingsNextBoot"
                 }
             ]

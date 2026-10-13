@@ -50,6 +50,7 @@ public:
     DEFINE_SETTINGFACT(gstDebugLevel)
     DEFINE_SETTINGFACT(followTarget)
     DEFINE_SETTINGFACT(qLocaleLanguage)
+    DEFINE_SETTINGFACT(showVehicleFirmwareWarning)
     DEFINE_SETTINGFACT(clearSettingsNextBoot)
     DEFINE_SETTINGFACT(disableAllPersistence)
     DEFINE_SETTINGFACT(firstRunPromptIdsShown)
