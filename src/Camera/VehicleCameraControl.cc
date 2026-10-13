@@ -158,6 +158,14 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
     _hasTrackingRectCapability = _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE;
     _hasTrackingPointCapability = _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_TRACKING_POINT;
 
+    // Thermal Range
+    _thermalRangeTimeoutTimer.setSingleShot(true);
+    connect(&_thermalRangeTimeoutTimer, &QTimer::timeout, this, &VehicleCameraControl::_thermalRangeTimeout);
+    connect(this, &VehicleCameraControl::thermalStreamChanged, this, [this]() {
+        _thermalRangeRetries = 0; // init
+        _requestThermalRange();
+    });
+
     qCDebug(VehicleCameraControlLog) << "Camera Info:";
     qCDebug(VehicleCameraControlLog) << "   vendor:" << vendor();
     qCDebug(VehicleCameraControlLog) << "   model:" << modelName();
@@ -173,6 +181,7 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
     qCDebug(VehicleCameraControlLog) << "   has focus:" << hasFocus();
     qCDebug(VehicleCameraControlLog) << "   has tracking:" << hasTracking();
     qCDebug(VehicleCameraControlLog) << "   has video stream:" << hasVideoStream();
+    qCDebug(VehicleCameraControlLog) << "   has thermal range:" << hasThermalRange();
     qCDebug(VehicleCameraControlLog) << "   photos in video mode:" << photosInVideoMode();
     qCDebug(VehicleCameraControlLog) << "   video in photo mode:" << videoInPhotoMode();
 }
@@ -187,6 +196,7 @@ VehicleCameraControl::~VehicleCameraControl()
     _cameraSettingsTimer.stop();
     _cameraSettingsRefreshTimer.stop();
     _storageInfoTimer.stop();
+    _thermalRangeTimeoutTimer.stop();
 
     delete _netManager;
     _netManager = nullptr;
@@ -208,6 +218,11 @@ void VehicleCameraControl::_initWhenReady()
     connect(&_cameraSettingsTimer, &QTimer::timeout, this, &VehicleCameraControl::_cameraSettingsTimeout);
 
     QTimer::singleShot(1000, this, &VehicleCameraControl::_checkForVideoStreams);
+
+    // request only if CAMERA_CAP_FLAGS_HAS_THERMAL_RANGE is set
+    if (hasThermalRange()) {
+        QTimer::singleShot(1000, this, &VehicleCameraControl::_requestThermalRange);
+    }
 
     connect(_vehicle, &Vehicle::mavCommandResult, this, &VehicleCameraControl::_mavCommandResult);
 
@@ -2504,4 +2519,57 @@ void VehicleCameraControl::_requestTrackingStatus()
                              true,
                              MAVLINK_MSG_ID_CAMERA_TRACKING_IMAGE_STATUS,
                              500000); // Interval (us)
+}
+
+void VehicleCameraControl::_requestThermalRange()
+{
+    if (!hasThermalRange()) {
+        return;
+    }
+
+    qCDebug(VehicleCameraControlLog) << "_requestThermalRange()";
+
+    _vehicle->sendMavCommand(_compID,
+                             MAV_CMD_SET_MESSAGE_INTERVAL,
+                             false,
+                             MAVLINK_MSG_ID_CAMERA_THERMAL_RANGE,
+                             1000000, // idk 1hz seems reasonable
+                             0,
+                             0);
+
+    _thermalRangeTimeoutTimer.start(kThermalRangeTimeoutMsecs);
+}
+
+void VehicleCameraControl::_thermalRangeTimeout()
+{
+    if (_thermalRangeAvailable) {
+        _thermalRangeAvailable = false;
+        emit thermalRangeChanged();
+    }
+
+    _thermalRangeRetries++;
+    qCDebug(VehicleCameraControlLog) << "_thermalRangeTimeout() - retries now:" << _thermalRangeRetries;
+    if(_thermalRangeRetries > 5) {
+        qCWarning(VehicleCameraControlLog) << "Giving up requesting thermal range after" << _thermalRangeRetries << "retries";
+        _thermalRangeTimeoutTimer.stop();
+        return;
+    }
+    qCDebug(VehicleCameraControlLog) << "_thermalRangeTimeout() - calling _requestThermalRange()";
+    _requestThermalRange();
+}
+
+void VehicleCameraControl::handleCameraThermalRange(const mavlink_camera_thermal_range_t& thermalRange)
+{
+    qCDebug(VehicleCameraControlLog) << "Received CAMERA_THERMAL_RANGE:"
+        << "\n\tStream ID:" << thermalRange.stream_id
+        << "\n\tMax (C):" << thermalRange.max
+        << "\n\tMin (C):" << thermalRange.min;
+
+    _thermalRangeRetries = 0;
+    _thermalRangeTimeoutTimer.start(kThermalRangeTimeoutMsecs);
+
+    _thermalRangeMax = static_cast<double>(thermalRange.max);
+    _thermalRangeMin = static_cast<double>(thermalRange.min);
+    _thermalRangeAvailable = true;
+    emit thermalRangeChanged();
 }

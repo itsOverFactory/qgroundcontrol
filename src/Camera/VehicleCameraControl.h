@@ -83,6 +83,7 @@ public:
     bool        supportsTrackingPoint() const override { return _hasTrackingPointCapability; }
     bool        supportsTrackingRect () const override { return _hasTrackingRectCapability; }
     bool        hasVideoStream      () const override { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM; }
+    bool        hasThermalRange     () const override { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_THERMAL_RANGE; }
     bool        photosInVideoMode   () const override { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE; }
     bool        videoInPhotoMode    () const override { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE; }
     CaptureVideoState captureVideoState() const override;
@@ -116,6 +117,9 @@ public:
     void        setThermalMode      (ThermalViewMode mode) override;
     double      thermalOpacity      () const override { return _thermalOpacity; }
     void        setThermalOpacity   (double val) override;
+    bool        thermalRangeAvailable() const override { return _thermalRangeAvailable; }
+    double      thermalRangeMax     () const override { return _thermalRangeMax; }
+    double      thermalRangeMin     () const override { return _thermalRangeMin; }
 
     void        setZoomLevel        (qreal level) override;
     void        setFocusLevel       (qreal level) override;
@@ -133,6 +137,7 @@ public:
     void        handleTrackingImageStatus(const mavlink_camera_tracking_image_status_t &trackingImageStatus) override;
     void        handleVideoStreamInformation(const mavlink_video_stream_information_t &videoStreamInformation) override;
     void        handleVideoStreamStatus(const mavlink_video_stream_status_t &videoStreamStatus) override;
+    void        handleCameraThermalRange(const mavlink_camera_thermal_range_t &thermalRange) override;
 
     bool        trackingEnabled     () const override { return _trackingEnabled; }
     void        setTrackingEnabled  (bool set) override;
@@ -195,6 +200,8 @@ public:
     static constexpr const char* kThermalOpacity  = "ThermalOpacity";
     static constexpr const char* kThermalMode     = "ThermalMode";
 
+    static constexpr int kThermalRangeTimeoutMsecs = 5000;
+
     //-----------------------------------------------------------------------------
     // Known Parameters
     static constexpr const char* kCAM_EV          = "CAM_EV";
@@ -212,6 +219,7 @@ protected:
     virtual void    _requestStreamInfo      (uint8_t streamID);
     virtual void    _requestStreamStatus    (uint8_t streamID);
     virtual void    _requestTrackingStatus  ();
+    virtual void    _requestThermalRange    ();
     virtual QGCVideoStreamInfo* _findStream (uint8_t streamID, bool report = true);
     virtual QGCVideoStreamInfo* _findStream (const QString name);
 
@@ -232,6 +240,7 @@ protected slots:
     virtual void    _recTimerHandler        ();
     virtual void    _checkForVideoStreams   ();
     virtual void    _onVideoManagerRecordingChanged  (bool recording);
+    virtual void    _thermalRangeTimeout    ();
     void            _paramDone              () override;
 
 private:
@@ -304,6 +313,11 @@ protected:
     QStringList                         _streamLabels;
     ThermalViewMode                     _thermalMode        = THERMAL_BLEND;
     double                              _thermalOpacity     = 85.0;
+    bool                                _thermalRangeAvailable = false;
+    double                              _thermalRangeMax    = 0.0;
+    double                              _thermalRangeMin    = 0.0;
+    QTimer                              _thermalRangeTimeoutTimer;
+    int                                 _thermalRangeRetries = 0;
     bool                                _hasTrackingRectCapability = false;
     bool                                _hasTrackingPointCapability = false;
     bool                                _trackingEnabled      = false;

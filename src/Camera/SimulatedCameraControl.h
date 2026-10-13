@@ -60,6 +60,7 @@ public:
     bool supportsTrackingPoint() const override { return false; }
     bool supportsTrackingRect() const override { return false; }
     bool hasVideoStream() const override;
+    bool hasThermalRange() const override { return false; }
     bool photosInVideoMode() const override { return true; }
     bool videoInPhotoMode() const override { return false; }
     CaptureVideoState captureVideoState() const override;
@@ -101,6 +102,9 @@ public:
     void setThermalMode(ThermalViewMode /*mode*/) override {}
     double thermalOpacity() const override { return 0.0; }
     void setThermalOpacity(double /*val*/) override {}
+    bool thermalRangeAvailable() const override { return false; }
+    double thermalRangeMax() const override { return 0.0; }
+    double thermalRangeMin() const override { return 0.0; }
 
     void setZoomLevel(qreal /*level*/) override {}
     void setFocusLevel(qreal /*level*/) override {}
@@ -131,6 +135,7 @@ public:
     void handleTrackingImageStatus(const mavlink_camera_tracking_image_status_t& /*trackingImageStatus*/) override {}
     void handleVideoStreamInformation(const mavlink_video_stream_information_t& /*videoStreamInformation*/) override {}
     void handleVideoStreamStatus(const mavlink_video_stream_status_t& /*videoStreamStatus*/) override {}
+    void handleCameraThermalRange(const mavlink_camera_thermal_range_t& /*thermalRange*/) override {}
 
 protected slots:
     void _paramDone() override {};

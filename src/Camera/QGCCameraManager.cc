@@ -1,4 +1,5 @@
 #include "QGCCameraManager.h"
+#include "CameraFactGroup.h"
 #include "CameraMetaData.h"
 #include "FirmwarePlugin.h"
 #include "Joystick.h"
@@ -204,6 +205,9 @@ void QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t &message)
         case MAVLINK_MSG_ID_CAMERA_FOV_STATUS:
             _handleCameraFovStatus(message);
             break;
+        case MAVLINK_MSG_ID_CAMERA_THERMAL_RANGE:
+            _handleCameraThermalRange(message);
+            break;
         default:
             break;
         }
@@ -386,6 +390,12 @@ void QGCCameraManager::_checkForLostCameras()
                 (void) _cameraLabels.removeAt(idx);
                 (void) _cameras.removeAt(idx);
                 pCamera->deleteLater();
+
+                auto cameraFactGroupIt = _cameraFactGroups.constFind(pInfo->compID);
+                if (cameraFactGroupIt != _cameraFactGroups.constEnd()) {
+                    cameraFactGroupIt.value()->setThermalRangeMax(qQNaN());
+                    cameraFactGroupIt.value()->setThermalRangeMin(qQNaN());
+                }
             }
         }
 
@@ -512,6 +522,30 @@ void QGCCameraManager::_handleTrackingImageStatus(const mavlink_message_t &messa
         mavlink_camera_tracking_image_status_t tis{};
         mavlink_msg_camera_tracking_image_status_decode(&message, &tis);
         pCamera->handleTrackingImageStatus(tis);
+    }
+}
+
+void QGCCameraManager::_handleCameraThermalRange(const mavlink_message_t& message)
+{
+    MavlinkCameraControlInterface* pCamera = _findCamera(message.compid);
+    if (pCamera == nullptr) {
+        return;
+    }
+    mavlink_camera_thermal_range_t thermalRange{};
+    mavlink_msg_camera_thermal_range_decode(&message, &thermalRange);
+    pCamera->handleCameraThermalRange(thermalRange);
+
+    if (pCamera->hasThermalRange()) {
+        auto cameraFactGroupIt = _cameraFactGroups.find(message.compid);
+        if (cameraFactGroupIt == _cameraFactGroups.constEnd()) {
+            cameraFactGroupIt = _cameraFactGroups.insert(message.compid, new CameraFactGroup(this));
+            // flyview telemetry widget
+            _vehicle->_addFactGroup(cameraFactGroupIt.value(), QStringLiteral("%1%2").arg(_cameraFactGroupNamePrefix).arg(message.compid));
+        }
+
+        CameraFactGroup *const cameraFactGroup = cameraFactGroupIt.value();
+        cameraFactGroup->setThermalRangeMax(thermalRange.max);
+        cameraFactGroup->setThermalRangeMin(thermalRange.min);
     }
 }
 

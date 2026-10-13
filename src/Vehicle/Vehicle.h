@@ -113,6 +113,7 @@ class Vehicle : public VehicleFactGroup, public VehicleTypes
     friend class RetryableRequestMessageStateTest;  // Unit test
 #endif
     friend class GimbalController;                  // Allow GimbalController to call _addFactGroup
+    friend class QGCCameraManager;                  // Allow QGCCameraManager to call _addFactGroup
 
 public:
     Vehicle(LinkInterface*          link,

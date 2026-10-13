@@ -5,6 +5,8 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        CameraFactGroup.cc
+        CameraFactGroup.h
         CameraMetaData.cc
         CameraMetaData.h
         MavlinkCameraControlInterface.cc
@@ -29,6 +31,11 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 qt_add_resources(${CMAKE_PROJECT_NAME} json_mavlink_camera
     PREFIX "/json"
     FILES CameraMetaData.json
+)
+
+qt_add_resources(${CMAKE_PROJECT_NAME} json_camera_fact_group
+    PREFIX "/json/Vehicle"
+    FILES CameraFact.json
 )
 
 qt_add_resources(${CMAKE_PROJECT_NAME} camera_qmlimages
