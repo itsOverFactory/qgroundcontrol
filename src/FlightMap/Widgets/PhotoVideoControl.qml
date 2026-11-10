@@ -171,6 +171,47 @@ Rectangle {
                 color: _camera.zoomLevel < 100.0 ? qgcPal.text : qgcPal.colorGreen
             }
 
+            // Show/hide the thermal frame max and min markers on the video, highlighted while shown
+            Item {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 5
+                Layout.preferredHeight: Layout.preferredWidth
+                visible: _camera.hasThermalRange
+
+                readonly property bool _shown: globals.showThermalRangeMarkers
+
+                Rectangle {
+                    id: thermalRangeMarkersButtonBackground
+                    anchors.fill: parent
+                    radius: ScreenTools.defaultBorderRadius
+                    color: parent._shown ? qgcPal.buttonHighlight : qgcPal.button
+                    border.width: 1
+                    border.color: qgcPal.buttonBorder
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: thermalRangeMarkersButtonBackground.radius
+                    color: qgcPal.buttonHighlight
+                    opacity: (thermalRangeMarkersMouseArea.pressed && thermalRangeMarkersMouseArea.containsMouse) ? 1 : (thermalRangeMarkersMouseArea.containsMouse ? 0.2 : 0)
+                }
+
+                QGCColoredImage {
+                    anchors.centerIn: parent
+                    source: "/InstrumentValueIcons/thermometer.svg"
+                    width: parent.width * 0.45
+                    height: width
+                    color: parent._shown ? qgcPal.buttonHighlightText : qgcPal.text
+                }
+
+                QGCMouseArea {
+                    id: thermalRangeMarkersMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: globals.showThermalRangeMarkers = !globals.showThermalRangeMarkers
+                }
+            }
+
         }
 
         ColumnLayout {

@@ -398,6 +398,12 @@ public:
     /// Trigger camera using MAV_CMD_DO_DIGICAM_CONTROL command
     Q_INVOKABLE void triggerSimpleCamera(void);
 
+    /// Point temperature request, x and y normalized 0..1 (0,0 top left)
+    Q_INVOKABLE void requestPointTemperature(double x, double y, bool showError);
+
+    /// Region temperature request, corners normalized 0..1 (0,0 top left)
+    Q_INVOKABLE void requestRegionTemperature(double topLeftX, double topLeftY, double bottomRightX, double bottomRightY, bool showError);
+
     /// Set home from flight map coordinate
     Q_INVOKABLE void doSetHome(const QGeoCoordinate& coord);
 
@@ -765,6 +771,9 @@ signals:
     void inFwdFlightChanged             ();
     void vtolInFwdFlightChanged         (bool vtolInFwdFlight);
     void prearmErrorChanged             (const QString& prearmError);
+    void cameraPointTemperatureReceived (double x, double y, double temperature);
+    void cameraRegionTemperatureReceived(double topLeftX, double topLeftY, double bottomRightX, double bottomRightY,
+                                         double max, double maxX, double maxY, double min, double minX, double minY);
     void soloFirmwareChanged            (bool soloFirmware);
     void defaultCruiseSpeedChanged      (double cruiseSpeed);
     void defaultHoverSpeedChanged       (double hoverSpeed);
@@ -885,6 +894,8 @@ private:
     // ArduPilot dialect messages
     void _handleCameraFeedback          (const mavlink_message_t& message);
     void _handleCameraImageCaptured     (const mavlink_message_t& message);
+    void _handleCameraPointTemperature  (const mavlink_message_t& message);
+    void _handleCameraRegionTemperature (const mavlink_message_t& message);
     void _handleCommandLong             (const mavlink_message_t& message);
     void _missionManagerError           (int errorCode, const QString& errorMsg);
     void _geoFenceManagerError          (int errorCode, const QString& errorMsg);

@@ -91,6 +91,7 @@ Item {
         property real _pressY:      0
         property bool _dragging:    false
         property bool _doubleClicked: false
+        property bool _regionSelecting: false  // press and hold, then drag: region temperature
         readonly property real _dragThreshold: 10
 
         // Defer single-click handling so a double-click (fullscreen toggle) doesn't also
@@ -104,8 +105,14 @@ Item {
             property real clickY: 0
 
             onTriggered: {
+                // A tap on a shown temperature marker only clears it, no gimbal or tracking command
+                if (thermalController.clearAt(clickX, clickY)) {
+                    return
+                }
+
                 onScreenGimbalController.mouseClicked(clickX, clickY)
                 cameraTrackingController.mouseClicked(clickX, clickY)
+                thermalController.mouseClicked(clickX, clickY)
             }
         }
 
@@ -117,16 +124,29 @@ Item {
             QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
         }
 
+        onPressAndHold: {
+            // Only a hold that hasn't started a gimbal/tracking drag, and only on a thermal capable camera
+            if (!_dragging && thermalController.thermalCapable) {
+                _regionSelecting = true
+                thermalController.mouseHoldStart(_pressX, _pressY)
+            }
+        }
+
         onPressed: (mouse) => {
             _pressX = mouse.x
             _pressY = mouse.y
             _dragging = false
+            _regionSelecting = false
             // Clear any stale flag (e.g. double-click followed by drag releases through the
             // drag branch without consuming it). Safe: pressed is emitted before doubleClicked.
             _doubleClicked = false
         }
 
         onPositionChanged: (mouse) => {
+            if (_regionSelecting) {
+                thermalController.mouseHoldPositionChanged(mouse.x, mouse.y)
+                return
+            }
             if (!_dragging && (Math.abs(mouse.x - _pressX) >= _dragThreshold || Math.abs(mouse.y - _pressY) >= _dragThreshold)) {
                 _dragging = true
                 onScreenGimbalController.mouseDragStart(_pressX, _pressY)
@@ -139,6 +159,11 @@ Item {
         }
 
         onReleased: (mouse) => {
+            if (_regionSelecting) {
+                _regionSelecting = false
+                thermalController.mouseHoldEnd()
+                return
+            }
             if (_dragging) {
                 onScreenGimbalController.mouseDragEnd()
                 cameraTrackingController.mouseDragEnd(mouse.x, mouse.y)
@@ -152,6 +177,15 @@ Item {
             }
             _dragging = false
         }
+    }
+
+    OnScreenThermalController {
+        id:                      thermalController
+        anchors.fill:            parent
+        visible:                 pipState.state === pipState.fullState
+        camera:                  videoStreaming._camera
+        videoWidth:              videoStreaming.getWidth()
+        videoHeight:             videoStreaming.getHeight()
     }
 
     ProximityRadarVideoView{

@@ -1070,6 +1070,26 @@ QString FactMetaData::appSettingsVerticalDistanceUnitsString()
     }
 }
 
+QVariant FactMetaData::celsiusToAppSettingsTemperatureUnits(const QVariant &celsius)
+{
+    const AppSettingsTranslation_s *const pAppSettingsTranslation = _findAppSettingsUnitsTranslation("C", UnitTemperature);
+    if (pAppSettingsTranslation) {
+        return pAppSettingsTranslation->rawTranslator(celsius);
+    } else {
+        return celsius;
+    }
+}
+
+QString FactMetaData::appSettingsTemperatureUnitsString()
+{
+    const AppSettingsTranslation_s *const pAppSettingsTranslation = _findAppSettingsUnitsTranslation("C", UnitTemperature);
+    if (pAppSettingsTranslation) {
+        return pAppSettingsTranslation->cookedUnits;
+    } else {
+        return QStringLiteral("C");
+    }
+}
+
 QString FactMetaData::appSettingsWeightUnitsString()
 {
     const AppSettingsTranslation_s *const pAppSettingsTranslation = _findAppSettingsUnitsTranslation("g", UnitWeight);

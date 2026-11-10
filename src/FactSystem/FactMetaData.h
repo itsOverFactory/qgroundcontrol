@@ -89,6 +89,12 @@ public:
     /// Returns the string for weight units which has configued by user
     static QString appSettingsWeightUnitsString();
 
+    /// Converts from celsius to the user specified temperature unit
+    static QVariant celsiusToAppSettingsTemperatureUnits(const QVariant &celsius);
+
+    /// Returns the string for temperature units which has configued by user
+    static QString appSettingsTemperatureUnitsString();
+
     /// Converts from meters to the user specified distance unit
     static QVariant squareMetersToAppSettingsAreaUnits(const QVariant &squareMeters);
 

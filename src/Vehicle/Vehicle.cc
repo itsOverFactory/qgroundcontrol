@@ -658,6 +658,12 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
         _handleCameraImageCaptured(message);
         break;
+    case MAVLINK_MSG_ID_CAMERA_POINT_TEMPERATURE:
+        _handleCameraPointTemperature(message);
+        break;
+    case MAVLINK_MSG_ID_CAMERA_REGION_TEMPERATURE:
+        _handleCameraRegionTemperature(message);
+        break;
     case MAVLINK_MSG_ID_ADSB_VEHICLE:
         ADSBVehicleManager::instance()->mavlinkMessageReceived(message);
         break;
@@ -3133,6 +3139,52 @@ void Vehicle::triggerSimpleCamera()
                    true,                        // show errors
                    0.0, 0.0, 0.0, 0.0,          // param 1-4 unused
                    1.0);                        // trigger camera
+}
+
+void Vehicle::requestPointTemperature(double x, double y, bool showError)
+{
+    // reply is CAMERA_POINT_TEMPERATURE
+    sendMavCommand(defaultComponentId(),
+                   MAV_CMD_CAMERA_POINT_TEMPERATURE,
+                   showError,
+                   static_cast<float>(x),
+                   static_cast<float>(y));
+}
+
+void Vehicle::_handleCameraPointTemperature(const mavlink_message_t& message)
+{
+    mavlink_camera_point_temperature_t pointTemperature;
+    mavlink_msg_camera_point_temperature_decode(&message, &pointTemperature);
+
+    emit cameraPointTemperatureReceived(pointTemperature.x, pointTemperature.y, pointTemperature.temperature);
+}
+
+void Vehicle::requestRegionTemperature(double topLeftX, double topLeftY, double bottomRightX, double bottomRightY, bool showError)
+{
+    // reply is CAMERA_REGION_TEMPERATURE
+    sendMavCommand(defaultComponentId(),
+                   MAV_CMD_CAMERA_REGION_TEMPERATURE,
+                   showError,
+                   static_cast<float>(topLeftX),
+                   static_cast<float>(topLeftY),
+                   static_cast<float>(bottomRightX),
+                   static_cast<float>(bottomRightY));
+}
+
+void Vehicle::_handleCameraRegionTemperature(const mavlink_message_t& message)
+{
+    mavlink_camera_region_temperature_t region;
+    mavlink_msg_camera_region_temperature_decode(&message, &region);
+
+    // qCDebug(VehicleLog) << "CAMERA_REGION_TEMPERATURE camera" << region.camera_device_id
+    //                     << "top left" << region.top_left_x << region.top_left_y
+    //                     << "bottom right" << region.bottom_right_x << region.bottom_right_y
+    //                     << "max" << region.max << region.max_point_x << region.max_point_y
+    //                     << "min" << region.min << region.min_point_x << region.min_point_y;
+
+    emit cameraRegionTemperatureReceived(region.top_left_x, region.top_left_y, region.bottom_right_x, region.bottom_right_y,
+                                         region.max, region.max_point_x, region.max_point_y,
+                                         region.min, region.min_point_x, region.min_point_y);
 }
 
 void Vehicle::sendGripperAction(GRIPPER_ACTIONS gripperAction)

@@ -120,6 +120,8 @@ public:
     bool        thermalRangeAvailable() const override { return _thermalRangeAvailable; }
     double      thermalRangeMax     () const override { return _thermalRangeMax; }
     double      thermalRangeMin     () const override { return _thermalRangeMin; }
+    QPointF     thermalRangeMaxPoint() const override { return _thermalRangeMaxPoint; }
+    QPointF     thermalRangeMinPoint() const override { return _thermalRangeMinPoint; }
 
     void        setZoomLevel        (qreal level) override;
     void        setFocusLevel       (qreal level) override;
@@ -316,6 +318,8 @@ protected:
     bool                                _thermalRangeAvailable = false;
     double                              _thermalRangeMax    = 0.0;
     double                              _thermalRangeMin    = 0.0;
+    QPointF                             _thermalRangeMaxPoint;
+    QPointF                             _thermalRangeMinPoint;
     QTimer                              _thermalRangeTimeoutTimer;
     int                                 _thermalRangeRetries = 0;
     bool                                _hasTrackingRectCapability = false;
