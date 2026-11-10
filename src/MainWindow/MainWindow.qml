@@ -85,6 +85,9 @@ ApplicationWindow {
         // Set to a non-empty string to block navigation with a custom reason (e.g. during calibration)
         property string             navigationBlockedReason:        ""
 
+        // Fly View video: show the thermal frame max and min markers. Off at start, toggled from the camera panel
+        property bool               showThermalRangeMarkers:        false
+
         // Property to manage RemoteID quick access to settings page
         property bool               commingFromRIDIndicator:        false
     }

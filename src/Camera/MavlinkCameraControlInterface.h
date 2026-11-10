@@ -79,6 +79,8 @@ class MavlinkCameraControlInterface : public FactGroup
     Q_PROPERTY(bool                 thermalRangeAvailable   READ thermalRangeAvailable                              NOTIFY thermalRangeChanged)
     Q_PROPERTY(double               thermalRangeMax         READ thermalRangeMax                                    NOTIFY thermalRangeChanged)
     Q_PROPERTY(double               thermalRangeMin         READ thermalRangeMin                                    NOTIFY thermalRangeChanged)
+    Q_PROPERTY(QPointF              thermalRangeMaxPoint    READ thermalRangeMaxPoint                               NOTIFY thermalRangeChanged)
+    Q_PROPERTY(QPointF              thermalRangeMinPoint    READ thermalRangeMinPoint                               NOTIFY thermalRangeChanged)
 
     // Camera tracking properties
     Q_PROPERTY(bool                 trackingEnabled         READ trackingEnabled        WRITE setTrackingEnabled    NOTIFY trackingEnabledChanged)
@@ -238,6 +240,8 @@ public:
     virtual bool thermalRangeAvailable() const = 0;
     virtual double thermalRangeMax() const = 0;
     virtual double thermalRangeMin() const = 0;
+    virtual QPointF thermalRangeMaxPoint() const = 0;
+    virtual QPointF thermalRangeMinPoint() const = 0;
 
     virtual void setZoomLevel(qreal level) = 0;
     virtual void setFocusLevel(qreal level) = 0;
