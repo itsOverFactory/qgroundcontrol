@@ -85,6 +85,10 @@ ApplicationWindow {
         // Set to a non-empty string to block navigation with a custom reason (e.g. during calibration)
         property string             navigationBlockedReason:        ""
 
+        // Fly View video tap sends MAV_CMD_TRACK_POINT with the tapped point.
+        // Off at start, toggled from the camera panel.
+        property bool               trackPointEnabled:              false
+
         // Property to manage RemoteID quick access to settings page
         property bool               commingFromRIDIndicator:        false
     }

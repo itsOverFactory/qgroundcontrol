@@ -1162,6 +1162,8 @@ public:
 
     Q_INVOKABLE void mountRangefinderEnable(int id, bool enable);
 
+    Q_INVOKABLE void sendTrackPoint(float x, float y, float radius, int cameraId);
+
 /*---------------------------------------------------------------------------*/
 /*===========================================================================*/
 /*                         CONTROL STATUS HANDLER                            */

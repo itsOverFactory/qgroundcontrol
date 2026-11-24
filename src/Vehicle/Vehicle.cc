@@ -3411,6 +3411,19 @@ void Vehicle::mountRangefinderEnable(int id, bool enable)
     }
 }
 
+void Vehicle::sendTrackPoint(float x, float y, float radius, int cameraId)
+{
+    // this should be forwarded to the onboard computer from the fcu
+    sendMavCommand(
+        MAV_COMP_ID_ONBOARD_COMPUTER,
+        MAV_CMD_TRACK_POINT,
+        true,
+        x,
+        y,
+        radius,
+        static_cast<float>(cameraId));
+}
+
 /*---------------------------------------------------------------------------*/
 /*===========================================================================*/
 /*                         Status Text Handler                               */
