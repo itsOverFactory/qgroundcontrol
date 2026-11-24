@@ -4,10 +4,14 @@ import QGroundControl
 import QGroundControl.Controls
 
 // Thermal camera temperatures drawn over the Fly View video:
-//  - point temperature: tap the video (CAMERA_POINT_TEMPERATURE)
+//  - point temperature: press and hold, release without moving (CAMERA_POINT_TEMPERATURE)
 //  - region temperature: press and hold, then drag a rectangle (CAMERA_REGION_TEMPERATURE)
-//  - frame max and min from the thermal range stream (CAMERA_THERMAL_RANGE), toggled from the camera panel
-// A tap on a shown point or region clears it.
+//  - frame max and min from the thermal range stream (CAMERA_THERMAL_RANGE)
+// All of them are enabled together by globals.thermalOverlayEnabled, toggled from the camera panel, and only while the
+// video is the thermal stream (see thermalVideo). While not active nothing is shown or requested and the mouse functions
+// do nothing, so taps and drags go to the gimbal/tracking only.
+// Press and hold on a shown point or region, release without moving: clears it.
+// Tap and drag are never used here, they stay with the gimbal/tracking.
 // The mouse functions are called by the FlyViewVideo mouse area, positions are in this item's coordinates.
 Item {
     id: rootItem
@@ -20,18 +24,28 @@ Item {
     // Point and region temperatures are only requested from a thermal capable camera.
     readonly property bool thermalCapable: !!camera && camera.hasThermalRange
 
-    onThermalCapableChanged: {
-        if (!thermalCapable) {
+    // true if the decoded video is the thermal image. The camera (SIYI ZT30) switches the same stream between visible
+    // (1280x720) and thermal (640x512), and the temperature positions are only valid on the thermal image.
+    readonly property size _thermalVideoSize: Qt.size(640, 512)
+    readonly property bool thermalVideo: QGroundControl.videoManager.videoSize.width === _thermalVideoSize.width &&
+                                         QGroundControl.videoManager.videoSize.height === _thermalVideoSize.height
+
+    // true if thermal temperatures are enabled by the user on a thermal capable camera showing its thermal image
+    readonly property bool active: thermalCapable && thermalVideo && globals.thermalOverlayEnabled
+
+    onActiveChanged: {
+        if (!active) {
             pointTemperature.clear()
             regionTemperature.clear()
+            regionSelection.cancel()
         }
     }
 
     // Smallest region selection that is sent, in pixels. Anything smaller is treated as no selection.
     readonly property real _minRegionSize: 10
 
-    // true if the tap was on a shown point or region temperature, which is then cleared
-    function clearAt(mouseX, mouseY) {
+    // true if the position is on a shown point or region temperature, which is then cleared
+    function _clearAt(mouseX, mouseY) {
         if (pointTemperature.isAt(mouseX, mouseY)) {
             pointTemperature.clear()
             return true
@@ -43,11 +57,8 @@ Item {
         return false
     }
 
-    // Tap: request the point temperature. One point at a time, replaces the shown one.
-    function mouseClicked(mouseX, mouseY) {
-        if (!thermalCapable) {
-            return
-        }
+    // Request the point temperature. One point at a time, replaces the shown one.
+    function _requestPoint(mouseX, mouseY) {
         pointTemperature.clear()
 
         // This only works if there is a vehicle because we use FCU as a camera/gimbal component.
@@ -62,8 +73,12 @@ Item {
         pointRefresh.requestSent()
     }
 
-    // Press and hold, then drag: select a region. The region temperature is requested on release.
+    // Press and hold. On release: a drag requests the region temperature, no drag clears the marker under the press or
+    // requests the point temperature there.
     function mouseHoldStart(mouseX, mouseY) {
+        if (!active) {
+            return
+        }
         regionSelection.start(mouseX, mouseY)
     }
 
@@ -325,12 +340,39 @@ Item {
             height = Math.abs(itemY - _startY)
         }
 
-        // Request the selected region, one region at a time: replaces the shown one
-        function finish() {
+        // Selection dropped without a request (thermal turned off while selecting)
+        function cancel() {
             visible = false
+        }
+
+        // Ring at the press position: shows the hold was taken by thermal, before release or drag
+        Rectangle {
+            x:              regionSelection._startX - regionSelection.x - width / 2
+            y:              regionSelection._startY - regionSelection.y - height / 2
+            width:          ScreenTools.defaultFontPixelHeight * 1.5
+            height:         width
+            radius:         width / 2
+            color:          "transparent"
+            border.color:   "white"
+            border.width:   2
+        }
+
+        // Released: no drag is a point (or clears the marker under it), a drag requests the selected region.
+        // One region at a time: replaces the shown one.
+        function finish() {
+            if (!visible) {
+                return  // canceled, or never started
+            }
+            visible = false
+            if (width < rootItem._minRegionSize && height < rootItem._minRegionSize) {
+                if (!rootItem._clearAt(_startX, _startY)) {
+                    rootItem._requestPoint(_startX, _startY)
+                }
+                return
+            }
             const vehicle = QGroundControl.multiVehicleManager.activeVehicle
             if (!vehicle || width < rootItem._minRegionSize || height < rootItem._minRegionSize) {
-                return
+                return  // no vehicle, or a thin line rather than a region
             }
             const topLeftX = rootItem._toVideoX(x)
             const topLeftY = rootItem._toVideoY(y)
@@ -386,12 +428,16 @@ Item {
             regionRefresh.cancel()
         }
 
-        // true if the tap at mouseX, mouseY (video coordinates) is on the shown region or its max or min label
+        // true if the position (video coordinates) is on the shown region's frame edge or its max or min label.
+        // The interior is left free so a point temperature can be requested inside the region.
         function isAt(mouseX, mouseY) {
             if (!_shown) {
                 return false
             }
-            const onFrame = rootItem._inRect(mouseX, mouseY, regionFrame.x, regionFrame.y, regionFrame.width, regionFrame.height)
+            const margin = rootItem._temperatureTapMargin
+            const inInterior = mouseX > regionFrame.x + margin && mouseX < regionFrame.x + regionFrame.width - margin &&
+                               mouseY > regionFrame.y + margin && mouseY < regionFrame.y + regionFrame.height - margin
+            const onFrame = rootItem._inRect(mouseX, mouseY, regionFrame.x, regionFrame.y, regionFrame.width, regionFrame.height) && !inInterior
             const onMaxLabel = rootItem._inRect(mouseX, mouseY, regionMaxLabel.x, regionMaxLabel.y, regionMaxLabel.width, regionMaxLabel.height)
             const onMinLabel = rootItem._inRect(mouseX, mouseY, regionMinLabel.x, regionMinLabel.y, regionMinLabel.width, regionMinLabel.height)
             return onFrame || onMaxLabel || onMinLabel
@@ -458,7 +504,7 @@ Item {
     // Frame max and min from the camera's thermal range stream (CAMERA_THERMAL_RANGE), when it reports their positions
     Item {
         id:         thermalRangePoints
-        visible:    globals.showThermalRangeMarkers && !!thermalRangePoints._camera && thermalRangePoints._camera.thermalRangeAvailable
+        visible:    rootItem.active && thermalRangePoints._camera.thermalRangeAvailable
 
         readonly property var _camera: rootItem.camera
 

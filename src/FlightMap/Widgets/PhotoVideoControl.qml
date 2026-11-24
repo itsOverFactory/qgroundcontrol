@@ -171,14 +171,14 @@ Rectangle {
                 color: _camera.zoomLevel < 100.0 ? qgcPal.text : qgcPal.colorGreen
             }
 
-            // Show/hide the thermal frame max and min markers on the video, highlighted while shown
+            // Enable/disable all thermal temperatures on the video (frame max/min, tap point, drag region), highlighted while enabled
             Item {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 5
                 Layout.preferredHeight: Layout.preferredWidth
                 visible: _camera.hasThermalRange
 
-                readonly property bool _shown: globals.showThermalRangeMarkers
+                readonly property bool _shown: globals.thermalOverlayEnabled
 
                 Rectangle {
                     id: thermalRangeMarkersButtonBackground
@@ -208,7 +208,7 @@ Rectangle {
                     id: thermalRangeMarkersMouseArea
                     anchors.fill: parent
                     hoverEnabled: true
-                    onClicked: globals.showThermalRangeMarkers = !globals.showThermalRangeMarkers
+                    onClicked: globals.thermalOverlayEnabled = !globals.thermalOverlayEnabled
                 }
             }
 

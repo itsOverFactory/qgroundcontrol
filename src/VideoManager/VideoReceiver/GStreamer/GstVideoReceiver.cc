@@ -465,6 +465,7 @@ void GstVideoReceiver::startDecoding(void *sink)
     _resetVideoSink = true;
 
     _videoSinkProbeId = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, _videoSinkProbe, this, nullptr);
+    _videoSinkCapsProbeId = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, _videoSinkCapsProbe, this, nullptr);
     gst_clear_object(&pad);
 
     _videoSink = videoSink;
@@ -1231,10 +1232,12 @@ void GstVideoReceiver::_shutdownDecodingBranch()
         GstPad *sinkpad = gst_element_get_static_pad(_videoSink, "sink");
         if (sinkpad) {
             gst_pad_remove_probe(sinkpad, _videoSinkProbeId);
+            gst_pad_remove_probe(sinkpad, _videoSinkCapsProbeId);
             gst_clear_object(&sinkpad);
         }
     }
     _videoSinkProbeId = 0;
+    _videoSinkCapsProbeId = 0;
 
     if (_eosProbeId != 0 && _eosProbePad) {
         // Probe was installed on the source pad in _onNewSourcePad; remove from that exact pad — not from _decoder, which may already be cleared above.
@@ -1586,6 +1589,46 @@ GstPadProbeReturn GstVideoReceiver::_videoSinkProbe(GstPad *pad, GstPadProbeInfo
 
         pThis->_noteVideoSinkFrame();
     }
+
+    return GST_PAD_PROBE_OK;
+}
+
+GstPadProbeReturn GstVideoReceiver::_videoSinkCapsProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data)
+{
+    Q_UNUSED(pad);
+
+    GstEvent *event = gst_pad_probe_info_get_event(info);
+    if (GST_EVENT_TYPE(event) != GST_EVENT_CAPS) {
+        return GST_PAD_PROBE_OK;
+    }
+
+    GstCaps *caps = nullptr;
+    gst_event_parse_caps(event, &caps);     // caps owned by the event
+    const GstStructure *structure = caps ? gst_caps_get_structure(caps, 0) : nullptr;
+    if (!structure) {
+        qCCritical(GstVideoReceiverLog) << "Unable to determine video size - caps event without structure";
+        return GST_PAD_PROBE_OK;
+    }
+
+    gint width = 0;
+    gint height = 0;
+    (void) gst_structure_get_int(structure, "width", &width);
+    (void) gst_structure_get_int(structure, "height", &height);
+
+    // Swap W×H for 90°/270° streams so QML AR is computed on display dimensions.
+    QSize videoSize(width, height);
+    gint orientation = 0;
+    if (gst_structure_get_int(structure, "video-orientation", &orientation)
+        && (orientation == GST_VIDEO_ORIENTATION_90R
+            || orientation == GST_VIDEO_ORIENTATION_90L
+            || orientation == GST_VIDEO_ORIENTATION_UL_LR
+            || orientation == GST_VIDEO_ORIENTATION_UR_LL)) {
+        videoSize.transpose();
+    }
+
+    GstVideoReceiver *pThis = static_cast<GstVideoReceiver*>(user_data);
+    qCDebug(GstVideoReceiverLog) << "Video sink caps:" << videoSize;
+    emit pThis->videoSizeChanged(videoSize);
 
     return GST_PAD_PROBE_OK;
 }

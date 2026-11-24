@@ -86,12 +86,13 @@ Item {
         id:                         flyViewVideoMouseArea
         anchors.fill:               parent
         enabled:                    pipState.state === pipState.fullState
+        pressAndHoldInterval:       450     // thermal hold: short enough to not feel sluggish, long enough to not catch a tap
 
         property real _pressX:      0
         property real _pressY:      0
         property bool _dragging:    false
         property bool _doubleClicked: false
-        property bool _regionSelecting: false  // press and hold, then drag: region temperature
+        property bool _thermalHolding: false   // press and hold: thermal point (release) or region (drag)
         readonly property real _dragThreshold: 10
 
         // Defer single-click handling so a double-click (fullscreen toggle) doesn't also
@@ -104,15 +105,10 @@ Item {
             property real clickX: 0
             property real clickY: 0
 
+            // Tap and drag belong to the gimbal/tracking, thermal only uses press and hold
             onTriggered: {
-                // A tap on a shown temperature marker only clears it, no gimbal or tracking command
-                if (thermalController.clearAt(clickX, clickY)) {
-                    return
-                }
-
                 onScreenGimbalController.mouseClicked(clickX, clickY)
                 cameraTrackingController.mouseClicked(clickX, clickY)
-                thermalController.mouseClicked(clickX, clickY)
             }
         }
 
@@ -125,9 +121,10 @@ Item {
         }
 
         onPressAndHold: {
-            // Only a hold that hasn't started a gimbal/tracking drag, and only on a thermal capable camera
-            if (!_dragging && thermalController.thermalCapable) {
-                _regionSelecting = true
+            // Only a hold that hasn't started a gimbal/tracking drag, and only while thermal temperatures are active.
+            // Otherwise the hold is ignored and a following drag is a normal gimbal/tracking drag.
+            if (!_dragging && thermalController.active) {
+                _thermalHolding = true
                 thermalController.mouseHoldStart(_pressX, _pressY)
             }
         }
@@ -136,14 +133,14 @@ Item {
             _pressX = mouse.x
             _pressY = mouse.y
             _dragging = false
-            _regionSelecting = false
+            _thermalHolding = false
             // Clear any stale flag (e.g. double-click followed by drag releases through the
             // drag branch without consuming it). Safe: pressed is emitted before doubleClicked.
             _doubleClicked = false
         }
 
         onPositionChanged: (mouse) => {
-            if (_regionSelecting) {
+            if (_thermalHolding) {
                 thermalController.mouseHoldPositionChanged(mouse.x, mouse.y)
                 return
             }
@@ -159,8 +156,8 @@ Item {
         }
 
         onReleased: (mouse) => {
-            if (_regionSelecting) {
-                _regionSelecting = false
+            if (_thermalHolding) {
+                _thermalHolding = false
                 thermalController.mouseHoldEnd()
                 return
             }
