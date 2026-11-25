@@ -82,6 +82,13 @@ Item {
         videoHeight:             videoStreaming.getHeight()
     }
 
+    OnScreenTrackPointController {
+        id:                      trackPointController
+        anchors.fill:            parent
+        videoWidth:              videoStreaming.getWidth()
+        videoHeight:             videoStreaming.getHeight()
+    }
+
     MouseArea {
         id:                         flyViewVideoMouseArea
         anchors.fill:               parent
@@ -109,6 +116,7 @@ Item {
             onTriggered: {
                 onScreenGimbalController.mouseClicked(clickX, clickY)
                 cameraTrackingController.mouseClicked(clickX, clickY)
+                trackPointController.mouseClicked(clickX, clickY)
             }
         }
 

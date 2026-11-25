@@ -56,6 +56,7 @@ qt_add_qml_module(FlyViewModule
         OnScreenCameraTrackingController.qml
         OnScreenGimbalController.qml
         OnScreenThermalController.qml
+        OnScreenTrackPointController.qml
         PreFlightBatteryCheck.qml
         PreFlightCheckList.qml
         PreFlightCheckListShowAction.qml
