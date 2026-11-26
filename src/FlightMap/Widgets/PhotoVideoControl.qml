@@ -171,6 +171,87 @@ Rectangle {
                 color: _camera.zoomLevel < 100.0 ? qgcPal.text : qgcPal.colorGreen
             }
 
+            // Enable/disable all thermal temperatures on the video (frame max/min, tap point, drag region), highlighted while enabled
+            Item {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 5
+                Layout.preferredHeight: Layout.preferredWidth
+                visible: _camera.hasThermalRange
+
+                readonly property bool _shown: globals.thermalOverlayEnabled
+
+                Rectangle {
+                    id: thermalRangeMarkersButtonBackground
+                    anchors.fill: parent
+                    radius: ScreenTools.defaultBorderRadius
+                    color: parent._shown ? qgcPal.buttonHighlight : qgcPal.button
+                    border.width: 1
+                    border.color: qgcPal.buttonBorder
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: thermalRangeMarkersButtonBackground.radius
+                    color: qgcPal.buttonHighlight
+                    opacity: (thermalRangeMarkersMouseArea.pressed && thermalRangeMarkersMouseArea.containsMouse) ? 1 : (thermalRangeMarkersMouseArea.containsMouse ? 0.2 : 0)
+                }
+
+                QGCColoredImage {
+                    anchors.centerIn: parent
+                    source: "/InstrumentValueIcons/thermometer.svg"
+                    width: parent.width * 0.45
+                    height: width
+                    color: parent._shown ? qgcPal.buttonHighlightText : qgcPal.text
+                }
+
+                QGCMouseArea {
+                    id: thermalRangeMarkersMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: globals.thermalOverlayEnabled = !globals.thermalOverlayEnabled
+                }
+            }
+
+            // Enable/disable sending MAV_CMD_TRACK_POINT on video tap, highlighted while enabled
+            Item {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 5
+                Layout.preferredHeight: Layout.preferredWidth
+
+                readonly property bool _shown: globals.trackPointEnabled
+
+                Rectangle {
+                    id: trackPointButtonBackground
+                    anchors.fill: parent
+                    radius: ScreenTools.defaultBorderRadius
+                    color: parent._shown ? qgcPal.buttonHighlight : qgcPal.button
+                    border.width: 1
+                    border.color: qgcPal.buttonBorder
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: trackPointButtonBackground.radius
+                    color: qgcPal.buttonHighlight
+                    opacity: (trackPointMouseArea.pressed && trackPointMouseArea.containsMouse) ? 1 : (trackPointMouseArea.containsMouse ? 0.2 : 0)
+                }
+
+                QGCColoredImage {
+                    anchors.centerIn: parent
+                    source: "/InstrumentValueIcons/target.svg"
+                    width: parent.width * 0.45
+                    height: width
+                    color: parent._shown ? qgcPal.buttonHighlightText : qgcPal.text
+                }
+
+                QGCMouseArea {
+                    id: trackPointMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: globals.trackPointEnabled = !globals.trackPointEnabled
+                }
+            }
+
         }
 
         ColumnLayout {

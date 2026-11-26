@@ -105,6 +105,8 @@ public:
     bool thermalRangeAvailable() const override { return false; }
     double thermalRangeMax() const override { return 0.0; }
     double thermalRangeMin() const override { return 0.0; }
+    QPointF thermalRangeMaxPoint() const override { return QPointF(); }
+    QPointF thermalRangeMinPoint() const override { return QPointF(); }
 
     void setZoomLevel(qreal /*level*/) override {}
     void setFocusLevel(qreal /*level*/) override {}

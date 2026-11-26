@@ -119,6 +119,9 @@ private:
     static void _onNewPad(GstElement *element, GstPad *pad, gpointer data);
     static GstPadProbeReturn _teeProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _videoSinkProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
+    /// Emits videoSizeChanged on every caps event reaching the video sink: at stream start and on mid-stream resolution
+    /// changes (e.g. a camera switching the same RTSP stream between 1280x720 visible and 640x512 thermal).
+    static GstPadProbeReturn _videoSinkCapsProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _eosProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _keyframeWatch(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
 
@@ -138,6 +141,7 @@ private:
         0;  ///< Tee-probe frame tally (streaming thread); drives the source-side flow heartbeat log.
     gulong _teeProbeId = 0;
     gulong _videoSinkProbeId = 0;
+    gulong _videoSinkCapsProbeId = 0;
     gulong _eosProbeId = 0;
     GstPad *_eosProbePad = nullptr;  // ref-held: probe install pad, kept so removal targets the right pad regardless of _decoder lifecycle
     gulong _keyframeWatchId = 0;

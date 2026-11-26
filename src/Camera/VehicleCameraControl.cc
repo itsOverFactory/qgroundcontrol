@@ -2579,16 +2579,20 @@ void VehicleCameraControl::_thermalRangeTimeout()
 
 void VehicleCameraControl::handleCameraThermalRange(const mavlink_camera_thermal_range_t& thermalRange)
 {
-    qCDebug(VehicleCameraControlLog) << "Received CAMERA_THERMAL_RANGE:"
-        << "\n\tStream ID:" << thermalRange.stream_id
-        << "\n\tMax (C):" << thermalRange.max
-        << "\n\tMin (C):" << thermalRange.min;
+    // qCDebug(VehicleCameraControlLog) << "Received CAMERA_THERMAL_RANGE:"
+    //     << "\n\tStream ID:" << thermalRange.stream_id
+    //     << "\n\tMax (C):" << thermalRange.max
+    //     << "\n\tMin (C):" << thermalRange.min
+    //     << "\n\tMax point:" << thermalRange.max_point_x << thermalRange.max_point_y
+    //     << "\n\tMin point:" << thermalRange.min_point_x << thermalRange.min_point_y;
 
     _thermalRangeRetries = 0;
     _thermalRangeTimeoutTimer.start(kThermalRangeTimeoutMsecs);
 
     _thermalRangeMax = static_cast<double>(thermalRange.max);
     _thermalRangeMin = static_cast<double>(thermalRange.min);
+    _thermalRangeMaxPoint = QPointF(thermalRange.max_point_x, thermalRange.max_point_y);
+    _thermalRangeMinPoint = QPointF(thermalRange.min_point_x, thermalRange.min_point_y);
     _thermalRangeAvailable = true;
     emit thermalRangeChanged();
 }
