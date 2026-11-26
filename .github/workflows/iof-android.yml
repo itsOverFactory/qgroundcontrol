@@ -32,9 +32,19 @@ on:
           - both
           - arm64-v8a
           - x86_64
+  workflow_call:
+    inputs:
+      build_type:
+        required: false
+        default: 'Release'
+        type: string
+      abi:
+        required: false
+        default: 'both'
+        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: iof-android-${{ github.workflow }}-${{ github.ref }}
   # cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
   cancel-in-progress: true
 
@@ -340,44 +350,3 @@ jobs:
           # status: ${{ steps.playstore_rollout.outputs.status }}
           # user_fraction: ${{ steps.playstore_rollout.outputs.user_fraction }}
           # whats_new_directory: ${{ github.workspace }}/deploy/android/whatsnew
-
-  release:
-    name: GitHub Release
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
-    steps:
-      - name: Download APKs
-        uses: actions/download-artifact@v8
-        with:
-          pattern: QGroundControl-*
-          path: ${{ runner.temp }}/apks
-          merge-multiple: true
-
-      - name: Publish release
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          BRANCH: ${{ github.ref_name }}
-          SHA: ${{ github.sha }}
-          EXPECTED_APKS: ${{ (inputs.abi == 'arm64-v8a' || inputs.abi == 'x86_64') && '1' || '2' }}
-        run: |
-          TAG="${BRANCH//\//-}-latest"
-          shopt -s nullglob
-          apks=("${RUNNER_TEMP}"/apks/*.apk)
-          if [[ ${#apks[@]} -ne ${EXPECTED_APKS} ]]; then
-            echo "::error::Expected ${EXPECTED_APKS} APKs, found ${#apks[@]}"
-            ls -la "${RUNNER_TEMP}/apks"
-            exit 1
-          fi
-          if gh release view "${TAG}" >/dev/null 2>&1; then
-            gh release delete "${TAG}" --cleanup-tag --yes
-          fi
-          gh release create "${TAG}" "${apks[@]}" \
-            --target "${SHA}" \
-            --prerelease \
-            --title "${BRANCH} (latest)" \
-            --notes "Android APKs built from ${BRANCH} at ${SHA}."

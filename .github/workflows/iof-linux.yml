@@ -28,9 +28,19 @@ on:
           - both
           - x86_64
           - aarch64
+  workflow_call:
+    inputs:
+      build_type:
+        required: false
+        default: 'Release'
+        type: string
+      arch:
+        required: false
+        default: 'both'
+        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: iof-linux-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:

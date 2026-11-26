@@ -1,0 +1,103 @@
+name: IOF Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
+      abi:
+        description: 'Android ABI'
+        required: false
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - arm64-v8a
+          - x86_64
+      arch:
+        description: 'Linux architecture'
+        required: false
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - x86_64
+          - aarch64
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    uses: ./.github/workflows/iof-android.yml
+    with:
+      build_type: ${{ inputs.build_type }}
+      abi: ${{ inputs.abi }}
+    secrets: inherit
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+
+  linux:
+    uses: ./.github/workflows/iof-linux.yml
+    with:
+      build_type: ${{ inputs.build_type }}
+      arch: ${{ inputs.arch }}
+    permissions:
+      contents: read
+
+  release:
+    name: GitHub Release
+    needs: [android, linux]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: QGroundControl-*
+          path: ${{ runner.temp }}/release
+          merge-multiple: true
+
+      - name: Publish release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          BUILD_TYPE: ${{ inputs.build_type }}
+          EXPECTED_APKS: ${{ inputs.abi == 'both' && '2' || '1' }}
+          EXPECTED_APPIMAGES: ${{ inputs.arch == 'both' && '2' || '1' }}
+        run: |
+          TAG="${BRANCH//\//-}-latest"
+          shopt -s nullglob
+          apks=("${RUNNER_TEMP}"/release/*.apk)
+          appimages=("${RUNNER_TEMP}"/release/*.AppImage)
+          if [[ ${#apks[@]} -ne ${EXPECTED_APKS} || ${#appimages[@]} -ne ${EXPECTED_APPIMAGES} ]]; then
+            echo "::error::Expected ${EXPECTED_APKS} APKs and ${EXPECTED_APPIMAGES} AppImages, found ${#apks[@]} and ${#appimages[@]}"
+            ls -la "${RUNNER_TEMP}/release"
+            exit 1
+          fi
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release delete "${TAG}" --cleanup-tag --yes
+          fi
+          gh release create "${TAG}" "${apks[@]}" "${appimages[@]}" \
+            --target "${SHA}" \
+            --prerelease \
+            --title "${BRANCH} (latest)" \
+            --notes "${BUILD_TYPE} build of ${BRANCH} at ${SHA}: Android APKs and Linux AppImages."
