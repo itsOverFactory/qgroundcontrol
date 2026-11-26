@@ -1,10 +1,8 @@
-name: Alt Linux
+name: IOF Linux
 
 # Build for the itsOverFactory fork: Linux x86_64 and/or aarch64 AppImage (Release or Debug).
-# Runs on standard GitHub-hosted runners (free for public repositories).
 
 on:
-  # Manual builds only for now (Actions -> Alt Linux -> Run workflow, pick the branch).
   # push:
   #   branches:
   #     - alt/Stable_V5.1
@@ -41,15 +39,12 @@ permissions:
 jobs:
   linux:
     name: Linux ${{ matrix.arch }}
-    # Native arm64 runner for aarch64 (free on public repos); same runners as linux.yml uses for forks.
     runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 120
 
     strategy:
       fail-fast: false
       matrix:
-        # Architectures come from the "arch" input; empty (e.g. act without --input) means both.
-        # Values match CMAKE_SYSTEM_PROCESSOR, which names the AppImage (QGroundControl-<arch>.AppImage).
         arch: ${{ fromJSON(inputs.arch == 'x86_64' && '["x86_64"]' || inputs.arch == 'aarch64' && '["aarch64"]' || '["x86_64","aarch64"]') }}
 
     defaults:
@@ -88,7 +83,6 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ env.BUILD_TYPE }}
 
-      # linuxdeploy strips binaries on Ubuntu (cmake/install/CreateAppImage.cmake); keep Debug symbols.
       - name: Keep debug symbols in AppImage
         if: env.BUILD_TYPE == 'Debug'
         run: echo "NO_STRIP=1" >> "$GITHUB_ENV"
