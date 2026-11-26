@@ -1,6 +1,6 @@
 name: Alt Linux
 
-# Build for the itsOverFactory fork: Linux x86_64 AppImage (Release or Debug).
+# Build for the itsOverFactory fork: Linux x86_64 and/or aarch64 AppImage (Release or Debug).
 # Runs on standard GitHub-hosted runners (free for public repositories).
 
 on:
@@ -21,6 +21,15 @@ on:
         options:
           - Release
           - Debug
+      arch:
+        description: 'Architecture'
+        required: false
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - x86_64
+          - aarch64
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -31,9 +40,17 @@ permissions:
 
 jobs:
   linux:
-    name: Linux x86_64
-    runs-on: ubuntu-24.04
+    name: Linux ${{ matrix.arch }}
+    # Native arm64 runner for aarch64 (free on public repos); same runners as linux.yml uses for forks.
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Architectures come from the "arch" input; empty (e.g. act without --input) means both.
+        # Values match CMAKE_SYSTEM_PROCESSOR, which names the AppImage (QGroundControl-<arch>.AppImage).
+        arch: ${{ fromJSON(inputs.arch == 'x86_64' && '["x86_64"]' || inputs.arch == 'aarch64' && '["aarch64"]' || '["x86_64","aarch64"]') }}
 
     defaults:
       run:
@@ -52,8 +69,8 @@ jobs:
       - name: Build Setup
         uses: ./.github/actions/build-setup
         with:
-          qt-host: linux
-          qt-arch: linux_gcc_64
+          qt-host: ${{ matrix.arch == 'aarch64' && 'linux_arm64' || 'linux' }}
+          qt-arch: ${{ matrix.arch == 'aarch64' && 'linux_gcc_arm64' || 'linux_gcc_64' }}
           build-type: ${{ env.BUILD_TYPE }}
 
       - name: Install Dependencies
@@ -85,13 +102,13 @@ jobs:
       - name: Verify AppImage
         uses: ./.github/actions/verify-executable
         with:
-          binary-path: ${{ runner.temp }}/build/QGroundControl-x86_64.AppImage
+          binary-path: ${{ runner.temp }}/build/QGroundControl-${{ matrix.arch }}.AppImage
           type: appimage
 
       - name: Upload AppImage
         uses: actions/upload-artifact@v7
         with:
-          name: QGroundControl-x86_64-${{ env.BUILD_TYPE }}.AppImage
-          path: ${{ runner.temp }}/build/QGroundControl-x86_64.AppImage
+          name: QGroundControl-${{ matrix.arch }}-${{ env.BUILD_TYPE }}.AppImage
+          path: ${{ runner.temp }}/build/QGroundControl-${{ matrix.arch }}.AppImage
           if-no-files-found: error
           retention-days: 14
