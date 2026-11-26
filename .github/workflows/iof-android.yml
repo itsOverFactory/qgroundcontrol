@@ -1,4 +1,4 @@
-name: Alt Android
+name: IOF Android
 
 on:
   # push:
@@ -81,9 +81,6 @@ jobs:
     # needs: [changes, build-matrix]
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
-    # RunsOn runners only when the leg defines one, on mavlink, and not from a fork.
-    # ubuntu-24.04 pinned: ubuntu-latest is now Ubuntu 26.04, where the apt package list fails
-    # (libgstreamer-plugins-good1.0-dev has no candidate). Same pin as linux.yml.
     runs-on: ubuntu-24.04
     # runs-on: ${{ github.repository_owner == 'mavlink' && matrix.runson_runner != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner={1}', github.run_id, matrix.runson_runner) || matrix.fallback_runner }}
     timeout-minutes: 120
@@ -149,9 +146,6 @@ jobs:
           fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
           persist-credentials: false
 
-      # RunsOn images ship no Android SDK and don't preset ANDROID_SDK_ROOT (unlike
-      # GitHub-hosted images), so setup-android@v4 has no install target. Point it
-      # at a writable path. macOS stays GitHub-hosted with its preinstalled SDK.
       - name: Set Android SDK location
         # if: matrix.host != 'mac'
         shell: bash
@@ -159,8 +153,6 @@ jobs:
           echo "ANDROID_SDK_ROOT=${RUNNER_TEMP}/android-sdk" >> "$GITHUB_ENV"
           echo "ANDROID_HOME=${RUNNER_TEMP}/android-sdk" >> "$GITHUB_ENV"
 
-      # Local act runs only: Setup Gradle (inside Build Setup) needs java before qt-android installs it.
-      # GitHub-hosted runners have Java preinstalled; act sets ACT=true.
       - name: Setup Java (act only)
         if: ${{ env.ACT }}
         uses: actions/setup-java@v5
@@ -178,9 +170,6 @@ jobs:
           aqt-source: ${{ matrix.aqt_source || '' }}
           abis: ${{ env.QT_ANDROID_ABIS }}
           build-type: ${{ env.BUILD_TYPE }}
-          # matrix.host is unique per leg; linux and linux-emulator otherwise
-          # resolve to identical cache inputs and would race on the moccache
-          # save key.
           cache-key-suffix: linux-${{ matrix.abi }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
 
@@ -204,9 +193,6 @@ jobs:
             # echo "QT_ANDROID_KEYSTORE_KEY_PASS=android"
           # } >> "$GITHUB_ENV"
 
-      # Same key on every build, so a new APK installs over the previous one.
-      # Needs repo secrets ANDROID_KEYSTORE_BASE64 (base64 of the .keystore) and ANDROID_KEYSTORE_PASSWORD
-      # (store and key password). Key alias must be "qgc".
       - name: Restore signing keystore
         shell: bash
         env:
@@ -243,7 +229,6 @@ jobs:
         id: build
         # continue-on-error: ${{ matrix.emulator }}
         timeout-minutes: 75
-        # Disable Gradle daemon on CI — Windows runners hang for 30+ min after BUILD SUCCESSFUL waiting for daemon shutdown.
         env:
           GRADLE_OPTS: -Dorg.gradle.daemon=false
         uses: ./.github/actions/cmake-build
@@ -319,7 +304,6 @@ jobs:
 
       - name: Attest and Upload
         # if: ${{ !matrix.emulator }}
-        # Skipped under act: its local artifact server rejects the upload API ("unknown field mime_type").
         if: ${{ !env.ACT }}
         uses: ./.github/actions/attest-and-upload
         with:
@@ -334,8 +318,6 @@ jobs:
           # aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
           # upload-aws: ${{ matrix.primary }}
 
-      # # Shell conditional, not a `&& x || y` GHA ternary whose `||` arm misfires
-      # # if the truthy arm ever evaluates falsy. tag -> production; master -> beta.
       # - name: Compute Play Store rollout
         # id: playstore_rollout
         # if: ${{ !matrix.emulator && matrix.primary && env.HAS_PLAYSTORE_SECRET == 'true' && (github.ref_type == 'tag' || github.ref == 'refs/heads/master') }}
